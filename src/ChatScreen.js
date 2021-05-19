@@ -12,10 +12,11 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { Send } from "@material-ui/icons";
+import { Send, Videocam } from "@material-ui/icons";
 import axios from "axios";
 import ChatItem from "./ChatItem";
-const Chat = require("twilio-chat");
+import { v4 as uuidv4 } from "uuid";
+const Chat = require("@twilio/conversations");
 
 class ChatScreen extends React.Component {
   constructor(props) {
@@ -32,9 +33,12 @@ class ChatScreen extends React.Component {
   }
 
   getToken = async (email) => {
-    const response = await axios.get(`http://localhost:5000/token/${email}`);
+    const response = await axios.get(
+      `https://iqormobpushnotif-development.azurewebsites.net/api/twilio/token/${email}`
+    );
     const { data } = response;
-    return data.token;
+    console.log(data);
+    return data.jwt;
   };
 
   componentDidMount = async () => {
@@ -67,28 +71,28 @@ class ChatScreen extends React.Component {
       client.updateToken(token);
     });
 
-    client.on("channelJoined", async (channel) => {
-      // getting list of all messages since this is an existing channel
-      const messages = await channel.getMessages();
-      this.setState({ messages: messages.items || [] });
-      this.scrollToBottom();
-    });
+    // client.on("channelJoined", async (channel) => {
+    //   // getting list of all messages since this is an existing channel
+    //   const messages = await channel.getMessages();
+    //   this.setState({ messages: messages.items || [] });
+    //   this.scrollToBottom();
+    // });
 
     try {
-      const channel = await client.getChannelByUniqueName(room);
+      const channel = await client.getConversationByUniqueName(room);
       await this.joinChannel(channel);
       this.setState({ channel, loading: false });
     } catch {
-      try {
-        const channel = await client.createChannel({
-          uniqueName: room,
-          friendlyName: room,
-        });
-        await this.joinChannel(channel);
-        this.setState({ channel, loading: false });
-      } catch {
-        throw new Error("unable to create channel, please reload this page");
-      }
+      // try {
+      //   const channel = await client.createChannel({
+      //     uniqueName: room,
+      //     friendlyName: room,
+      //   });
+      //   await this.joinChannel(channel);
+      //   this.setState({ channel, loading: false });
+      // } catch {
+      //   throw new Error("unable to create channel, please reload this page");
+      // }
     }
   };
 
@@ -96,6 +100,16 @@ class ChatScreen extends React.Component {
     if (channel.channelState.status !== "joined") {
       await channel.join();
     }
+
+    channel.getMessages().then((paginator) => {
+      console.log(paginator.items);
+      this.setState(
+        {
+          messages: paginator.items,
+        },
+        this.scrollToBottom
+      );
+    });
     channel.on("messageAdded", this.handleMessageAdded);
   };
 
@@ -120,7 +134,7 @@ class ChatScreen extends React.Component {
     const { text, channel } = this.state;
     if (text && String(text).trim()) {
       this.setState({ loading: true });
-      channel && channel.sendMessage(text);
+      channel && channel.sendMessage(text, { giftedId: uuidv4() });
       this.setState({ text: "", loading: false });
     }
   };
@@ -137,10 +151,20 @@ class ChatScreen extends React.Component {
           <CircularProgress style={{ color: "white" }} />
         </Backdrop>
         <AppBar elevation={10}>
-          <Toolbar>
+          <Toolbar style={{ justifyContent: "space-between" }}>
             <Typography variant="h6">
               {`Room: ${room}, User: ${email}`}
             </Typography>
+            {/* <IconButton
+              onClick={() => {
+                this.props.history.push("videocall", {
+                  room,
+                  email,
+                });
+              }}
+            >
+              <Videocam style={styles.sendIcon} />
+            </IconButton> */}
           </Toolbar>
         </AppBar>
         <CssBaseline />

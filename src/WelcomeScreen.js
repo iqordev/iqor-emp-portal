@@ -21,14 +21,8 @@ class WelcomeScreen extends React.Component {
 
   login = () => {
     const { email, room } = this.state;
-    if (
-      email &&
-      room &&
-      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
-        email
-      )
-    ) {
-      this.props.history.push("chat", { room, email });
+    if (email) {
+      this.props.history.push("home", { room, email });
     }
   };
 
@@ -60,15 +54,15 @@ class WelcomeScreen extends React.Component {
                 name="email"
                 required
                 style={styles.textField}
-                label="Email address"
-                placeholder="Enter email address"
+                label="Domain ID"
+                placeholder="Enter Domain ID"
                 variant="outlined"
                 type="email"
                 value={email}
                 onChange={this.handleChange}
               />
             </Grid>
-            <Grid item style={styles.gridItem}>
+            {/* <Grid item style={styles.gridItem}>
               <TextField
                 name="room"
                 required
@@ -79,7 +73,7 @@ class WelcomeScreen extends React.Component {
                 value={room}
                 onChange={this.handleChange}
               />
-            </Grid>
+            </Grid> */}
             <Grid item style={styles.gridItem}>
               <Button
                 color="primary"
