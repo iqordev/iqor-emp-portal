@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -15,7 +15,7 @@ import {
   CssBaseline,
   Toolbar,
 } from "@material-ui/core";
-import { getToken } from "./api";
+import { getToken, getUser } from "./api";
 import { Conversations } from "@twilio/conversations/lib/data/conversations";
 const Chat = require("@twilio/conversations");
 
@@ -33,6 +33,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ConversationListScreen(props) {
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState([]);
+  const [user, setUser] = useState(null);
 
   const classes = useStyles();
 
@@ -44,6 +45,9 @@ export default function ConversationListScreen(props) {
   const initialize = async () => {
     try {
       token = await getToken(email);
+      const currentUser = await getUser();
+      setUser(currentUser);
+      console.log(currentUser);
     } catch {
       throw new Error("unable to get token, please reload this page");
     }
@@ -58,14 +62,55 @@ export default function ConversationListScreen(props) {
       .finally(setLoading(false));
   };
 
+  const getShortConversationName2 = (friendlyName, user) => {
+    const conversationName = friendlyName.split("|");
+    const is1v1Conversation = conversationName.length === 2;
+    const currentUser = `${user.lastName}, ${user.firstName}`;
+    const [firstUser, secondUser, otherText] = conversationName;
+
+    const displayedUser = firstUser === currentUser ? secondUser : firstUser;
+    const groupTitle = `${displayedUser} ${otherText ?? ""}`;
+
+    return is1v1Conversation ? displayedUser : groupTitle;
+  };
+
   useEffect(() => {
     initialize();
   }, []);
 
   const navigate = (conversation) => {
     console.log(conversation.sid);
-    props.history.push("chat", { room: conversation.sid, email });
+    props.history.push("chat", {
+      room: conversation.sid,
+      email,
+      roomName: getShortConversationName2(conversation.friendlyName, user),
+    });
   };
+
+  const sortedConversations = useMemo(() => {
+    const sortedResult =
+      conversations.length > 0
+        ? conversations.sort((conversationA, conversationB) => {
+            const cbLastMessageTime =
+              conversationB.lastMessage?.dateCreated ??
+              conversationB.dateUpdated ??
+              conversationB.dateCreated;
+
+            const cALastMessageTime =
+              conversationA.lastMessage?.dateCreated ??
+              conversationA.dateUpdated ??
+              conversationA.dateCreated;
+
+            return cbLastMessageTime - cALastMessageTime;
+          })
+        : conversations;
+
+    return sortedResult;
+  }, [conversations]);
+
+  // const getLastMessage = (conversation) => {
+  //   conversation.getMessages(1).then((message) => console.log(message));
+  // };
 
   return (
     <Container component="main" maxWidth="md">
@@ -79,7 +124,7 @@ export default function ConversationListScreen(props) {
       </AppBar>
       <CssBaseline />
       <List className={classes.root}>
-        {conversations.map((conversation) => (
+        {sortedConversations.map((conversation) => (
           <ListItem
             key={conversation.sid}
             alignItems="flex-start"
@@ -92,20 +137,24 @@ export default function ConversationListScreen(props) {
               />
             </ListItemAvatar>
             <ListItemText
-              primary={conversation.friendlyName}
-              //   secondary={
-              //     <React.Fragment>
-              //       <Typography
-              //         component="span"
-              //         variant="body2"
-              //         className={classes.inline}
-              //         color="textPrimary"
-              //       >
-              //         Ali Connors
-              //       </Typography>
-              //       {" — I'll be in your neighborhood doing errands this…"}
-              //     </React.Fragment>
-              //   }
+              primary={getShortConversationName2(
+                conversation.friendlyName,
+                user
+              )}
+              // secondary={
+              //   <React.Fragment>
+              //     <Typography
+              //       component="span"
+              //       variant="body2"
+              //       className={classes.inline}
+              //       color="textPrimary"
+              //     >
+              //       Ali Connors
+              //     </Typography>
+              //     {getLastMessage(conversation)}
+              //     {/* {" — I'll be in your neighborhood doing errands this…"} */}
+              //   </React.Fragment>
+              // }
             />
           </ListItem>
         ))}

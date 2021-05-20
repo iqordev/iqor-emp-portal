@@ -143,7 +143,7 @@ class ChatScreen extends React.Component {
     const { loading, text, messages, channel } = this.state;
     const { location } = this.props;
     const { state } = location || {};
-    const { email, room } = state || {};
+    const { email, room, roomName } = state || {};
 
     return (
       <Container component="main" maxWidth="md">
@@ -152,10 +152,8 @@ class ChatScreen extends React.Component {
         </Backdrop>
         <AppBar elevation={10}>
           <Toolbar style={{ justifyContent: "space-between" }}>
-            <Typography variant="h6">
-              {`Room: ${room}, User: ${email}`}
-            </Typography>
-            {/* <IconButton
+            <Typography variant="h6">{`${roomName}`}</Typography>
+            <IconButton
               onClick={() => {
                 this.props.history.push("videocall", {
                   room,
@@ -164,7 +162,7 @@ class ChatScreen extends React.Component {
               }}
             >
               <Videocam style={styles.sendIcon} />
-            </IconButton> */}
+            </IconButton>
           </Toolbar>
         </AppBar>
         <CssBaseline />
