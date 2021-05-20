@@ -69,7 +69,7 @@ export function createMeetingRequest(meetingName, attendeeName) {
 
 export function endMeetingRequest(meetingName) {
   let url = encodeURI(
-    // SERVER_URL +
+    SERVER_URL +
     "/end?" + `title=${meetingName}&region=${SERVER_REGION}`
   );
 
