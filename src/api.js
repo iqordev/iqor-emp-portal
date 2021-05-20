@@ -54,27 +54,27 @@ const SERVER_URL =
   "https://eajgjboaf1.execute-api.us-east-1.amazonaws.com/Prod";
 const SERVER_REGION = "us-east-1";
 
-export function createMeetingRequest(meetingName, attendeeName) {
-  let url = encodeURI(
-    SERVER_URL +
-    "/join?" +
-      `title=${meetingName}&name=${attendeeName}&region=${SERVER_REGION}`
+export async function createMeetingRequest(meetingName, attendeeName) {
+  const response = await axios.post(
+    `https://iqormobpushnotif-development.azurewebsites.net/api/aws/meeting`,
+    {
+      meetingName,
+      attendeeName,
+    }
   );
 
-  return fetch(url, { method: "POST" }).then((j) => {
-    console.log(j);
-    return j.json();
-  });
+  console.log(response.data);
+  return response.data;
 }
 
-export function endMeetingRequest(meetingName) {
-  let url = encodeURI(
-    SERVER_URL +
-    "/end?" + `title=${meetingName}&region=${SERVER_REGION}`
+export async function endMeetingRequest(meetingName) {
+  const response = await axios.delete(
+    `https://iqormobpushnotif-development.azurewebsites.net/api/aws/meeting`,
+    {
+      meetingName,
+    }
   );
 
-  return fetch(url, { method: "POST" }).then((j) => {
-    console.log(j);
-    return j.json();
-  });
+  console.log(response.data);
+  return response.data;
 }
