@@ -50,13 +50,13 @@ export const startCall = async (currentMeetingId) => {
     .catch((err) => console.error("[MeetingScreen]: ", err));
 };
 
-// const SERVER_URL =
-//   "https://eajgjboaf1.execute-api.us-east-1.amazonaws.com/Prod";
+const SERVER_URL =
+  "https://eajgjboaf1.execute-api.us-east-1.amazonaws.com/Prod";
 const SERVER_REGION = "us-east-1";
 
 export function createMeetingRequest(meetingName, attendeeName) {
   let url = encodeURI(
-    // SERVER_URL +
+    SERVER_URL +
     "/join?" +
       `title=${meetingName}&name=${attendeeName}&region=${SERVER_REGION}`
   );
