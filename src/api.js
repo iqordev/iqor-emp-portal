@@ -39,20 +39,16 @@ export const getUser = async () => {
     .catch((err) => console.error("[MeetingScreen]: ", err));
 };
 
-export const startCall = async (currentMeetingId) => {
+export const startCall = async (currentMeetingId, mode) => {
   axios
     .post(
       `https://iqormobpushnotif-development.azurewebsites.net/api/aws/video/call/${currentMeetingId}`,
       {
-        mode: "video", //video only for testing
+        mode, //video only for testing
       }
     )
     .catch((err) => console.error("[MeetingScreen]: ", err));
 };
-
-const SERVER_URL =
-  "https://eajgjboaf1.execute-api.us-east-1.amazonaws.com/Prod";
-const SERVER_REGION = "us-east-1";
 
 export async function createMeetingRequest(meetingName, attendeeName) {
   const response = await axios.post(

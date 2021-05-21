@@ -12,7 +12,7 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { Send, Videocam } from "@material-ui/icons";
+import { Send, Videocam, Phone } from "@material-ui/icons";
 import axios from "axios";
 import ChatItem from "./ChatItem";
 import { v4 as uuidv4 } from "uuid";
@@ -153,16 +153,30 @@ class ChatScreen extends React.Component {
         <AppBar elevation={10}>
           <Toolbar style={{ justifyContent: "space-between" }}>
             <Typography variant="h6">{`${roomName}`}</Typography>
-            <IconButton
-              onClick={() => {
-                this.props.history.push("videocall", {
-                  room,
-                  email,
-                });
-              }}
-            >
-              <Videocam style={styles.sendIcon} />
-            </IconButton>
+            <div>
+              <IconButton
+                onClick={() => {
+                  this.props.history.push("videocall", {
+                    room,
+                    email,
+                    mode: "call",
+                  });
+                }}
+              >
+                <Phone style={styles.sendIcon} />
+              </IconButton>
+              <IconButton
+                onClick={() => {
+                  this.props.history.push("videocall", {
+                    room,
+                    email,
+                    mode: "video",
+                  });
+                }}
+              >
+                <Videocam style={styles.sendIcon} />
+              </IconButton>
+            </div>
           </Toolbar>
         </AppBar>
         <CssBaseline />

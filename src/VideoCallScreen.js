@@ -31,7 +31,7 @@ import {
   useLocalAudioOutput,
 } from "amazon-chime-sdk-component-library-react";
 import { ThemeProvider } from "styled-components";
-import { createMeetingRequest, startCall } from "./api";
+import { createMeetingRequest, endMeetingRequest, startCall } from "./api";
 import { v4 as uuidv4 } from "uuid";
 
 const VideoCallScreen = (props) => {
@@ -45,7 +45,7 @@ const VideoCallScreen = (props) => {
 
   const { location } = props;
   const { state } = location || {};
-  const { email, room } = state || {};
+  const { email, room, mode } = state || {};
 
   useEffect(() => {
     const meetingId = `${uuidv4()}:${room}`;
@@ -62,7 +62,7 @@ const VideoCallScreen = (props) => {
       // At this point you can let users setup their devices, or start the session immediately
       await meetingManager.start();
 
-      await startCall(meetingId);
+      await startCall(meetingId, mode);
     });
 
     return async () => {
@@ -128,8 +128,8 @@ const VideoCallScreen = (props) => {
           <ControlBar showLabels layout="left">
             <ControlBarButton {...microphoneButtonProps} />
             <ControlBarButton {...volumeButtonProps} />
-            <ControlBarButton {...cameraButtonProps} />
-            <ControlBarButton {...laptopButtonProps} />
+            {mode === "video" && <ControlBarButton {...cameraButtonProps} />}
+            {mode === "video" && <ControlBarButton {...laptopButtonProps} />}
             <ControlBarButton {...hangUpButtonProps} />
           </ControlBar>
         </Cell>
