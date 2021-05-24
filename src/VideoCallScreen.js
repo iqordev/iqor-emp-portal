@@ -1,16 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
-import Typography from "@material-ui/core/Typography";
-import {
-  AppBar,
-  Backdrop,
-  CircularProgress,
-  Container,
-  CssBaseline,
-  Toolbar,
-  IconButton,
-} from "@material-ui/core";
-import { CameraAlt, DesktopMac } from "@material-ui/icons";
 import {
   VideoTileGrid,
   LocalVideo,
@@ -33,6 +22,7 @@ import {
 import { ThemeProvider } from "styled-components";
 import { createMeetingRequest, endMeetingRequest, startCall } from "./api";
 import { v4 as uuidv4 } from "uuid";
+import Attendees from "./components/Attendees";
 
 const VideoCallScreen = (props) => {
   const meetingManager = useMeetingManager();
@@ -50,7 +40,6 @@ const VideoCallScreen = (props) => {
   useEffect(() => {
     const meetingId = `${uuidv4()}:${room}`;
 
-    console.log(meetingId);
     createMeetingRequest(meetingId, email).then(async (meetingResponse) => {
       const joinData = {
         meetingInfo: meetingResponse.JoinInfo.Meeting.Meeting,
@@ -107,41 +96,32 @@ const VideoCallScreen = (props) => {
   };
 
   return (
-    <Container component="main" maxWidth="md">
-      <AppBar elevation={10}>
-        <Toolbar style={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Meeting</Typography>
-        </Toolbar>
-      </AppBar>
-      <CssBaseline />
-
-      <Grid
-        style={{ height: "30vh" }}
-        gridGap=".25rem"
-        gridAutoFlow=""
-        gridTemplateColumns="100px 1fr"
-        gridTemplateAreas='
-    "sidebar main "
+    <Grid
+      style={{ height: "30vh" }}
+      gridAutoFlow=""
+      gridTemplateColumns="1fr 3fr"
+      gridTemplateRows="90vh 80px"
+      gridTemplateAreas='
+    "sidebar main"
+    "footer footer"
   '
-      >
-        <Cell gridArea="sidebar">
-          <ControlBar showLabels layout="left">
-            <ControlBarButton {...microphoneButtonProps} />
-            <ControlBarButton {...volumeButtonProps} />
-            {mode === "video" && <ControlBarButton {...cameraButtonProps} />}
-            {mode === "video" && <ControlBarButton {...laptopButtonProps} />}
-            <ControlBarButton {...hangUpButtonProps} />
-          </ControlBar>
-        </Cell>
-        <Cell gridArea="main">
-          <div style={{ height: "100vh" }}>
-            <VideoTileGrid
-              noRemoteVideoView={<div>No one is sharing his video</div>}
-            />
-          </div>
-        </Cell>
-      </Grid>
-    </Container>
+    >
+      <Cell gridArea="sidebar">
+        <Attendees />
+      </Cell>
+      <Cell gridArea="main">
+        <VideoTileGrid />
+      </Cell>
+      <Cell gridArea="footer">
+        <ControlBar showLabels layout="bottom">
+          <ControlBarButton {...microphoneButtonProps} />
+          <ControlBarButton {...volumeButtonProps} />
+          {mode === "video" && <ControlBarButton {...cameraButtonProps} />}
+          {mode === "video" && <ControlBarButton {...laptopButtonProps} />}
+          <ControlBarButton {...hangUpButtonProps} />
+        </ControlBar>
+      </Cell>
+    </Grid>
   );
 };
 
