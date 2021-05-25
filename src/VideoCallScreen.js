@@ -1,37 +1,24 @@
 import React, { useEffect, useState, useCallback } from "react";
 
 import {
+  Heading,
   VideoTileGrid,
-  LocalVideo,
-  useMeetingManager,
-  useLocalVideo,
-  useContentShareControls,
-  ControlBar,
-  ControlBarButton,
-  Microphone,
-  Phone,
-  Dialer,
-  Camera,
-  Sound,
-  Laptop,
   Grid,
   Cell,
-  useToggleLocalMute,
-  useLocalAudioOutput,
+  useMeetingManager,
+  useUserActivityState,
 } from "amazon-chime-sdk-component-library-react";
-import { ThemeProvider } from "styled-components";
-import { createMeetingRequest, endMeetingRequest, startCall } from "./api";
+import { createMeetingRequest, startCall } from "./api";
 import { v4 as uuidv4 } from "uuid";
 import Attendees from "./components/Attendees";
+import ControlBar from "./components/ControlBar";
 
 const VideoCallScreen = (props) => {
   const meetingManager = useMeetingManager();
-  const { isVideoEnabled, toggleVideo } = useLocalVideo();
-  const { toggleContentShare } = useContentShareControls();
-  const [cameraActive, setCameraActive] = useState(false);
+  const { isUserActive } = useUserActivityState();
 
-  const { muted, toggleMute } = useToggleLocalMute();
-  const { isAudioOn, toggleAudio } = useLocalAudioOutput();
+  const [isAttendeesTabOpen, setisAttendeesTabOpen] = useState(false);
+  const toggleAttendeesButton = () => setisAttendeesTabOpen((prev) => !prev);
 
   const { location } = props;
   const { state } = location || {};
@@ -59,40 +46,9 @@ const VideoCallScreen = (props) => {
     };
   }, []);
 
-  const microphoneButtonProps = {
-    icon: muted ? <Microphone muted /> : <Microphone />,
-    onClick: toggleMute,
-    label: "Mute",
-  };
-
-  const cameraButtonProps = {
-    icon: cameraActive ? <Camera disabled /> : <Camera />,
-    onClick: () => {
-      setCameraActive(!cameraActive);
-      toggleVideo();
-    },
-    label: "Camera",
-  };
-
-  const hangUpButtonProps = {
-    icon: <Phone />,
-    onClick: async () => {
-      await meetingManager.leave();
-      props.history.goBack();
-    },
-    label: "End",
-  };
-
-  const volumeButtonProps = {
-    icon: isAudioOn ? <Sound /> : <Sound disabled />,
-    onClick: toggleAudio,
-    label: "Volume",
-  };
-
-  const laptopButtonProps = {
-    icon: <Laptop />,
-    onClick: toggleContentShare,
-    label: "Screen",
+  const onHangup = async () => {
+    await meetingManager.leave();
+    props.history.goBack();
   };
 
   return (
@@ -103,23 +59,28 @@ const VideoCallScreen = (props) => {
       gridTemplateRows="90vh 80px"
       gridTemplateAreas='
     "sidebar main"
-    "footer footer"
-  '
+    "footer footer"'
     >
       <Cell gridArea="sidebar">
-        <Attendees />
+        {isAttendeesTabOpen ? <Attendees /> : null}
       </Cell>
       <Cell gridArea="main">
-        <VideoTileGrid />
+        <VideoTileGrid
+          noRemoteVideoView={
+            <Heading level={3} tag="p">
+              No one is sharing their screen.
+            </Heading>
+          }
+        />
       </Cell>
       <Cell gridArea="footer">
-        <ControlBar showLabels layout="bottom">
-          <ControlBarButton {...microphoneButtonProps} />
-          <ControlBarButton {...volumeButtonProps} />
-          {mode === "video" && <ControlBarButton {...cameraButtonProps} />}
-          {mode === "video" && <ControlBarButton {...laptopButtonProps} />}
-          <ControlBarButton {...hangUpButtonProps} />
-        </ControlBar>
+        {isUserActive ? (
+          <ControlBar
+            onHangup={onHangup}
+            onParticipantPress={toggleAttendeesButton}
+            mode={mode}
+          />
+        ) : null}
       </Cell>
     </Grid>
   );

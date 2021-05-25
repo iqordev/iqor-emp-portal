@@ -15,8 +15,15 @@ import {
   CssBaseline,
   Toolbar,
 } from "@material-ui/core";
+import { Heading, Grid, Cell } from "amazon-chime-sdk-component-library-react";
+import { useTheme } from "styled-components";
+import "./index.css";
+
 import { getToken, getUser } from "./api";
 import { Conversations } from "@twilio/conversations/lib/data/conversations";
+import ChannelsWrapper from "./containers/channels/ChannelsWrapper";
+import Messages from "./containers/messages/Messages";
+import Input from "./containers/input/Input";
 const Chat = require("@twilio/conversations");
 
 const useStyles = makeStyles((theme) => ({
@@ -31,11 +38,13 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function ConversationListScreen(props) {
+  const currentTheme = useTheme();
+  const classes = useStyles();
+
   const [loading, setLoading] = useState(true);
+  const [activeConversation, setActiveConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [user, setUser] = useState(null);
-
-  const classes = useStyles();
 
   const { location } = props;
   const { state } = location || {};
@@ -53,6 +62,17 @@ export default function ConversationListScreen(props) {
     }
 
     const client = await Chat.Client.create(token);
+
+    client.on("tokenAboutToExpire", async () => {
+      const token = await this.getToken(email);
+      client.updateToken(token);
+    });
+
+    client.on("tokenExpired", async () => {
+      const token = await this.getToken(email);
+      client.updateToken(token);
+    });
+
     client
       .getSubscribedConversations()
       .then((paginator) => {
@@ -62,30 +82,18 @@ export default function ConversationListScreen(props) {
       .finally(setLoading(false));
   };
 
-  const getShortConversationName2 = (friendlyName, user) => {
-    const conversationName = friendlyName.split("|");
-    const is1v1Conversation = conversationName.length === 2;
-    const currentUser = `${user.lastName}, ${user.firstName}`;
-    const [firstUser, secondUser, otherText] = conversationName;
-
-    const displayedUser = firstUser === currentUser ? secondUser : firstUser;
-    const groupTitle = `${displayedUser} ${otherText ?? ""}`;
-
-    return is1v1Conversation ? displayedUser : groupTitle;
-  };
-
   useEffect(() => {
     initialize();
   }, []);
 
-  const navigate = (conversation) => {
-    console.log(conversation.sid);
-    props.history.push("chat", {
-      room: conversation.sid,
-      email,
-      roomName: getShortConversationName2(conversation.friendlyName, user),
-    });
-  };
+  // const navigate = (conversation) => {
+  //   console.log(conversation.sid);
+  //   props.history.push("chat", {
+  //     room: conversation.sid,
+  //     email,
+  //     roomName: getShortConversationName2(conversation.friendlyName, user),
+  //   });
+  // };
 
   const sortedConversations = useMemo(() => {
     const sortedResult =
@@ -113,52 +121,75 @@ export default function ConversationListScreen(props) {
   // };
 
   return (
-    <Container component="main" maxWidth="md">
-      <Backdrop open={loading} style={{ zIndex: 99999 }}>
-        <CircularProgress style={{ color: "white" }} />
-      </Backdrop>
-      <AppBar elevation={10}>
-        <Toolbar>
-          <Typography variant="h6">Chats</Typography>
-        </Toolbar>
-      </AppBar>
-      <CssBaseline />
-      <List className={classes.root}>
-        {sortedConversations.map((conversation) => (
-          <ListItem
-            key={conversation.sid}
-            alignItems="flex-start"
-            onClick={() => navigate(conversation)}
-          >
-            <ListItemAvatar>
-              <Avatar
-                alt="Remy Sharp"
-                src="https://picsum.photos/seed/picsum/200/300"
+    <Grid
+      gridTemplateColumns="1fr 10fr"
+      gridTemplateRows="3rem 101%"
+      style={{ width: "100vw", height: "100vh" }}
+      gridTemplateAreas='
+        "heading heading"
+        "side main"      
+        '
+    >
+      <Cell gridArea="heading">
+        {/* HEADING */}
+        <Heading
+          level={5}
+          style={{
+            backgroundColor: "#ee3a43",
+            height: "3rem",
+            paddingLeft: "1rem",
+            color: "white",
+          }}
+          className="app-heading"
+        >
+          Chat App
+          <div className="user-block">
+            <a className="user-info" href="#">
+              {email || "Unknown"}
+            </a>
+
+            <a href="#" onClick={() => {}}>
+              Log out
+            </a>
+          </div>
+        </Heading>
+      </Cell>
+      <Cell gridArea="side" style={{ height: "calc(100vh - 3rem)" }}>
+        <div
+          style={{
+            backgroundColor: currentTheme.colors.greys.grey10,
+            height: "100%",
+            borderRight: `solid 1px ${currentTheme.colors.greys.grey30}`,
+          }}
+        >
+          {/* SIDEPANEL CHANNELS LIST */}
+          <ChannelsWrapper
+            conversations={sortedConversations}
+            user={user}
+            activeConversation={activeConversation}
+            setActiveConversation={setActiveConversation}
+          />
+        </div>
+      </Cell>
+      <Cell gridArea="main" style={{ height: "calc(100vh - 3rem)" }}>
+        {/* MAIN CHAT CONTENT WINDOW */}
+        {activeConversation ? (
+          <>
+            <div className="messaging-container">
+              <Messages activeConversation={activeConversation} user={user} />
+              <Input
+                style={{
+                  borderTop: `solid 1px ${currentTheme.colors.greys.grey40}`,
+                }}
+                activeConversation={activeConversation}
+                member={user}
               />
-            </ListItemAvatar>
-            <ListItemText
-              primary={getShortConversationName2(
-                conversation.friendlyName,
-                user
-              )}
-              // secondary={
-              //   <React.Fragment>
-              //     <Typography
-              //       component="span"
-              //       variant="body2"
-              //       className={classes.inline}
-              //       color="textPrimary"
-              //     >
-              //       Ali Connors
-              //     </Typography>
-              //     {getLastMessage(conversation)}
-              //     {/* {" — I'll be in your neighborhood doing errands this…"} */}
-              //   </React.Fragment>
-              // }
-            />
-          </ListItem>
-        ))}
-      </List>
-    </Container>
+            </div>
+          </>
+        ) : (
+          <div className="placeholder">Welcome</div>
+        )}
+      </Cell>
+    </Grid>
   );
 }

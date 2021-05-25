@@ -1,13 +1,119 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+.user-block {
+  /* Custom style */
+  right: 0;
+  display: inline-block;
+  position: absolute;
+  padding-right: 1rem;
+}
+
+.user-block a {
+  font-size: 14px;
+  line-height: 1.43;
+  text-align: center;
+  color: white;
+  padding-left: 24px;
+}
+
+.user-info {
+  position: relative;
+  display: inline-block;
+  text-decoration-line: none;
+}
+
+/* Tooltip text */
+.user-info .tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  margin-left: -100px;
+  position: absolute;
+  z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.user-info:hover .tooltiptext {
+  visibility: visible;
+}
+
+.messaging-container {
+  background-color: #f0f1f2;
+}
+
+h1.app-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4rem;
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+.main-page-content {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+.messaging-container,
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.placeholder {
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.Messages-list {
+  padding: 20px;
+  width: 100%;
+  margin: 0 auto;
+  flex-grow: 1;
+  overflow-y: scroll;
+}
+
+.parent {
+  display: inline-grid;
+  width: 100%;
+  padding: 10px 10px 10px 10px;
+}
+
+.child {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 10px auto 40px;
+}
+
+.notification {
+  position: absolute;
+  width: 100vw;
+  top: 4rem;
+}
+
+.notification div {
+  max-width: 50rem;
+  width: fit-content;
+  align-items: center;
 }

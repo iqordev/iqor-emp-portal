@@ -14,6 +14,7 @@ const Attendees = () => {
   const { roster } = useRosterState();
   const attendees = Object.values(roster);
 
+
   const filteredAttendees = useMemo(() => {
     return criteria
       ? attendees.filter((attendee) =>
@@ -39,7 +40,7 @@ const Attendees = () => {
       <RosterHeader
         title="Present"
         badge={attendees.length}
-        // onClose={() => {}}
+        // onClose={() => setRosterTabToggle(true)}
         // searchValue={criteria}
         onSearch={(e) => {
           const newValue = e.target.value;
