@@ -5,7 +5,7 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable import/no-unresolved */
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import {
   Avatar,
@@ -37,54 +37,10 @@ import "./ContactsWrapper.css";
 import { getShortConversationName } from "../../utils/simplifyConversationName";
 import { searchContacts } from "../../api";
 import { getAttendeeImage } from "../../utils/ImageHelper";
-
-// Generate Order Data
-function createData(id, date, name, shipTo, paymentMethod, amount) {
-  return { id, date, name, shipTo, paymentMethod, amount };
-}
-
-const rows = [
-  createData(
-    0,
-    "16 Mar, 2019",
-    "Elvis Presley",
-    "Tupelo, MS",
-    "VISA ⠀•••• 3719",
-    312.44
-  ),
-  createData(
-    1,
-    "16 Mar, 2019",
-    "Paul McCartney",
-    "London, UK",
-    "VISA ⠀•••• 2574",
-    866.99
-  ),
-  createData(
-    2,
-    "16 Mar, 2019",
-    "Tom Scholz",
-    "Boston, MA",
-    "MC ⠀•••• 1253",
-    100.81
-  ),
-  createData(
-    3,
-    "16 Mar, 2019",
-    "Michael Jackson",
-    "Gary, IN",
-    "AMEX ⠀•••• 2000",
-    654.39
-  ),
-  createData(
-    4,
-    "15 Mar, 2019",
-    "Bruce Springsteen",
-    "Long Branch, NJ",
-    "VISA ⠀•••• 5919",
-    212.79
-  ),
-];
+import { useHistory } from "react-router";
+import { CALL_TYPE } from "../../constants/CallType";
+import { convertName } from "../../utils/nameHelper";
+import { getUniqueName } from "../../utils/chatConversationHelper";
 
 function preventDefault(event) {
   event.preventDefault();
@@ -107,10 +63,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ContactsWrapper = ({ user }) => {
+const ContactsWrapper = ({ user, onTapContactChat }) => {
   const classes = useStyles();
+  const history = useHistory();
 
   const [contacts, setContacts] = useState([]);
+  const [criteria, setCriteria] = useState("");
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -122,65 +80,19 @@ const ContactsWrapper = ({ user }) => {
     fetchContacts();
   }, []);
 
+  const filteredContacts = useMemo(() => {
+    return criteria
+      ? contacts.filter(
+          (contact) =>
+            contact.firstName.includes(criteria) ||
+            contact.lastName.includes(criteria) ||
+            contact.domainId.includes(criteria) ||
+            contact.email.includes(criteria)
+        )
+      : contacts;
+  }, [contacts, criteria]);
+
   return (
-    // <>
-    //   <div className="channel-list-wrapper">
-    //     {/* <div className="channel-list-header">
-    //       <div className="channel-list-header-title">Chat</div>
-    //     </div> */}
-    //     <div style={{ width: 300, paddingLeft: "8px" }}>
-    //       <Autocomplete
-    //         id="free-solo-demo"
-    //         freeSolo
-    //         options={contacts.map((option) => option.domainId)}
-    //         renderInput={(params) => (
-    //           <TextField
-    //             {...params}
-    //             label="Search Contacts"
-    //             margin="normal"
-    //             variant="outlined"
-    //           />
-    //         )}
-    //       />
-    //     </div>
-    //     <List className={classes.root}>
-    //       {contacts ? (
-    //         contacts.map((contact) => (
-    //           <ListItem
-    //             key={contact.domainId}
-    //             onClick={(e) => {
-    //               //create conversation
-    //               // setActiveConversation(null);
-    //             }}
-    //           >
-    //             <ListItemAvatar>
-    //               <Avatar
-    //                 src={getAttendeeImage(contact.domainId, "alternate")}
-    //                 style={{ alignSelf: "flex-end" }}
-    //               />
-    //             </ListItemAvatar>
-    //             <ListItemText
-    //               primary={`${contact.lastName}, ${contact.firstName}`}
-    //               // secondary="Jan 9, 2014"
-    //             />
-    //           </ListItem>
-    //         ))
-    //       ) : (
-    //         <ListItem>
-    //           <ListItemAvatar>
-    //             <Avatar>
-    //               <PersonRounded />
-    //             </Avatar>
-    //           </ListItemAvatar>
-    //           <ListItemText
-    //             primary="Loading"
-    //             // secondary="Jan 9, 2014"
-    //           />
-    //         </ListItem>
-    //       )}
-    //     </List>
-    //   </div>
-    // </>
     <Grid item xs={12}>
       <Paper className={classes.paper}>
         <React.Fragment>
@@ -189,6 +101,10 @@ const ContactsWrapper = ({ user }) => {
             id="free-solo-demo"
             freeSolo
             options={contacts.map((option) => option.domainId)}
+            onInputChange={(event, value, reason) => {
+              console.log(event, value, reason);
+              setCriteria(value);
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -206,7 +122,7 @@ const ContactsWrapper = ({ user }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {contacts.map((contact) => (
+              {filteredContacts.map((contact) => (
                 <TableRow key={contact.domainId}>
                   <TableCell>
                     {/* <div style={{ display: "flex" }}>
@@ -217,13 +133,42 @@ const ContactsWrapper = ({ user }) => {
                     {/* </div> */}
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton color="primary" aria-label="chat">
+                    <IconButton
+                      color="primary"
+                      aria-label="chat"
+                      disabled={!contact.hasAppInstalled}
+                      onClick={() => {
+                        onTapContactChat(contact);
+                      }}
+                    >
                       <ChatBubbleRounded />
                     </IconButton>
-                    <IconButton color="primary" aria-label="call">
+                    <IconButton
+                      color="primary"
+                      aria-label="call"
+                      disabled={!contact.hasAppInstalled}
+                      onClick={() => {
+                        history.push("videocall", {
+                          domainId: user.domainId,
+                          notifiedIds: [contact.domainId],
+                          mode: CALL_TYPE.CALL,
+                        });
+                      }}
+                    >
                       <CallRounded />
                     </IconButton>
-                    <IconButton color="primary" aria-label="video-call">
+                    <IconButton
+                      color="primary"
+                      aria-label="video-call"
+                      disabled={!contact.hasAppInstalled}
+                      onClick={() => {
+                        history.push("videocall", {
+                          domainId: user.domainId,
+                          notifiedIds: [contact.domainId],
+                          mode: CALL_TYPE.VIDEO_CALL,
+                        });
+                      }}
+                    >
                       <VideocamRounded />
                     </IconButton>
                   </TableCell>

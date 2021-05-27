@@ -9,7 +9,7 @@ const instance = axios.create({
 instance.interceptors.request.use(
   async (config) => {
     const accessToken = localStorage.getItem("@accessToken");
-    console.log("accessToken", accessToken);
+    // console.log("accessToken", accessToken);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -31,7 +31,7 @@ export const getToken = async (domainId) => {
 
   localStorage.setItem("@accessToken", data.token);
 
-  console.log(data);
+  // console.log(data);
   return data.chatToken;
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import clsx from "clsx";
 // import { TabPanel,TabContext   } from "@matereial-ui/lab";
@@ -39,6 +39,8 @@ import Messages from "./containers/messages/Messages";
 import Input from "./containers/input/Input";
 import ContactsWrapper from "./containers/contacts/ContactsWrapper";
 import { DRAWER_TABS } from "./constants/DrawerTabs";
+import { getUniqueName } from "./utils/chatConversationHelper";
+import { convertName } from "./utils/nameHelper";
 const Chat = require("@twilio/conversations");
 
 const drawerWidth = 240;
@@ -114,6 +116,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ConversationListScreen(props) {
   const theme = useTheme();
   const classes = useStyles();
+  const clienRef = useRef();
 
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = useState(true);
@@ -133,7 +136,7 @@ export default function ConversationListScreen(props) {
 
   const { location } = props;
   const { state } = location || {};
-  const { domainId, conversationId } = state || {};
+  const { domainId, conversation } = state || {};
   let token = "";
 
   const initialize = async () => {
@@ -147,18 +150,19 @@ export default function ConversationListScreen(props) {
     }
 
     const client = await Chat.Client.create(token);
+    clienRef.current = client;
 
-    client.on("tokenAboutToExpire", async () => {
+    clienRef.current.on("tokenAboutToExpire", async () => {
       const token = await getToken(domainId);
       client.updateToken(token);
     });
 
-    client.on("tokenExpired", async () => {
+    clienRef.current.on("tokenExpired", async () => {
       const token = await getToken(domainId);
       client.updateToken(token);
     });
 
-    client
+    clienRef.current
       .getSubscribedConversations()
       .then((paginator) => {
         console.log(paginator.items);
@@ -179,6 +183,49 @@ export default function ConversationListScreen(props) {
   //     friendlyName: getShortConversationName2(conversation.friendlyName, user),
   //   });
   // };
+
+  const onTapContactChat = (contact) => {
+    const MAX_PARTICIPANT_P2P = 2;
+    const uniqueName = getUniqueName([contact.domainId], user.domainId);
+    const friendlyName = `${convertName(user)}|${convertName(contact)}`;
+    console.log(uniqueName, friendlyName);
+    const conversation = {
+      uniqueName: uniqueName,
+      friendlyName: friendlyName,
+      attributes: {
+        members: [
+          {
+            domainId: contact.domainId,
+            name: convertName(contact),
+            email: contact.email,
+          },
+          {
+            domainId: user.domainId,
+            name: convertName(user),
+            email: user.email,
+          },
+        ],
+        memberCount: MAX_PARTICIPANT_P2P,
+        isGroupChat: false,
+        isFriendlyNameUpdated: false,
+      },
+    };
+
+    clienRef.current
+      .getConversationByUniqueName(uniqueName)
+      .then((conversation) => {
+        setActiveConversation(conversation);
+        setTab(DRAWER_TABS.CHATS);
+      })
+      .catch(() => {
+        clienRef.current
+          .createConversation(conversation)
+          .then((conversation) => {
+            setActiveConversation(conversation);
+            setTab(DRAWER_TABS.CHATS);
+          });
+      });
+  };
 
   const sortedConversations = useMemo(() => {
     const sortedResult =
@@ -324,6 +371,7 @@ export default function ConversationListScreen(props) {
             <ContactsWrapper
               user={user}
               setActiveConversation={setActiveConversation}
+              onTapContactChat={onTapContactChat}
             />
           )}
         </Container>

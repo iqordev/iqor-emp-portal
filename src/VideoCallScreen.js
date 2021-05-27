@@ -22,10 +22,20 @@ const VideoCallScreen = (props) => {
 
   const { location } = props;
   const { state } = location || {};
-  const { domainId, conversationId, mode } = state || {};
+  const { domainId, conversationId, mode, notifiedIds } = state || {};
 
   useEffect(() => {
-    const meetingId = `${uuidv4()}:${conversationId}`;
+    const isConversationBase = conversationId ? true : false;
+    const meetingId = isConversationBase
+      ? `${uuidv4()}:${conversationId}`
+      : uuidv4();
+
+    console.log(
+      "isConversationBase",
+      isConversationBase,
+      `conversationId: ${conversationId}`,
+      `notifiedIds: ${notifiedIds}`
+    );
 
     createMeetingRequest(meetingId, domainId).then(async (meetingResponse) => {
       const joinData = {
@@ -38,7 +48,11 @@ const VideoCallScreen = (props) => {
       // At this point you can let users setup their devices, or start the session immediately
       await meetingManager.start();
 
-      await startCall(meetingId, mode);
+      await startCall(
+        meetingId,
+        mode,
+        !isConversationBase ? notifiedIds : null
+      );
     });
 
     return async () => {

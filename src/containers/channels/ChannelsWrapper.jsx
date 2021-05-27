@@ -57,6 +57,7 @@ const ChannelsWrapper = ({
               key={conversation.sid}
               selected={conversation.sid === activeConversation?.sid}
               onClick={(e) => {
+                console.log(conversation);
                 setActiveConversation(conversation);
               }}
             >
