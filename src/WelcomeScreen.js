@@ -8,6 +8,7 @@ import {
   Typography,
   Button,
 } from "@material-ui/core";
+import * as Colors from "./styles/colors";
 
 class WelcomeScreen extends React.Component {
   constructor(props) {
@@ -36,9 +37,7 @@ class WelcomeScreen extends React.Component {
       <>
         <AppBar style={styles.header} elevation={10}>
           <Toolbar>
-            <Typography variant="h6">
-              Chat App with Twilio Programmable Chat and React
-            </Typography>
+            <Typography variant="h6">Chat App</Typography>
           </Toolbar>
         </AppBar>
         <Grid
@@ -92,7 +91,9 @@ class WelcomeScreen extends React.Component {
 }
 
 const styles = {
-  header: {},
+  header: {
+    background: Colors.PRIMARY,
+  },
   grid: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
   card: { padding: 40 },
   textField: { width: 300 },

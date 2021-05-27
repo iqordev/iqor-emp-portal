@@ -19,7 +19,10 @@ import {
   Avatar,
   Grid,
   Container,
+  Paper,
+  TextField,
 } from "@material-ui/core";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import {
   ChatBubbleRounded,
   PeopleRounded,
@@ -33,7 +36,7 @@ import {
 import { useTheme } from "styled-components";
 import "./index.css";
 
-import { getToken, getUser } from "./api";
+import { getToken, getUser, searchContacts } from "./api";
 import ChannelsWrapper from "./containers/channels/ChannelsWrapper";
 import Messages from "./containers/messages/Messages";
 import Input from "./containers/input/Input";
@@ -41,6 +44,9 @@ import ContactsWrapper from "./containers/contacts/ContactsWrapper";
 import { DRAWER_TABS } from "./constants/DrawerTabs";
 import { getUniqueName } from "./utils/chatConversationHelper";
 import { convertName } from "./utils/nameHelper";
+import Title from "./components/Title";
+import * as Colors from "./styles/colors";
+
 const Chat = require("@twilio/conversations");
 
 const drawerWidth = 240;
@@ -50,6 +56,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
   },
   appBar: {
+    background: Colors.PRIMARY,
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
@@ -74,6 +81,7 @@ const useStyles = makeStyles((theme) => ({
     width: drawerWidth,
     flexShrink: 0,
     whiteSpace: "nowrap",
+    background: Colors.PRIMARY,
   },
   drawerOpen: {
     width: drawerWidth,
@@ -110,7 +118,17 @@ const useStyles = makeStyles((theme) => ({
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
   },
+  mainGrid:{
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(2),
+  },
   appBarSpacer: theme.mixins.toolbar,
+  paper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+  },
 }));
 
 export default function ConversationListScreen(props) {
@@ -123,6 +141,7 @@ export default function ConversationListScreen(props) {
   const [activeConversation, setActiveConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [user, setUser] = useState(null);
+  const [contacts, setContacts] = useState([]);
 
   const [tab, setTab] = React.useState(DRAWER_TABS.CHATS);
 
@@ -171,18 +190,16 @@ export default function ConversationListScreen(props) {
       .finally(setLoading(false));
   };
 
+  const fetchContacts = async () => {
+    const contacts = await searchContacts("");
+    console.log("contacts", contacts);
+    setContacts(contacts);
+  };
+
   useEffect(() => {
     initialize();
+    fetchContacts();
   }, []);
-
-  // const navigate = (conversation) => {
-  //   console.log(conversation.sid);
-  //   props.history.push("chat", {
-  //     conversationId: conversation.sid,
-  //     domainId,
-  //     friendlyName: getShortConversationName2(conversation.friendlyName, user),
-  //   });
-  // };
 
   const onTapContactChat = (contact) => {
     const MAX_PARTICIPANT_P2P = 2;
@@ -322,51 +339,72 @@ export default function ConversationListScreen(props) {
         <div className={classes.appBarSpacer} />
         <Container maxWidth="xl" className={classes.container}>
           {tab === DRAWER_TABS.CHATS ? (
-            <Grid container direction="row">
-              <Grid
-                item
-                style={{
-                  overflow: "auto",
-                  height: "70vh",
-                }}
-              >
-                {/* SIDEPANEL CHANNELS LIST */}
-                <ChannelsWrapper
-                  conversations={sortedConversations}
-                  user={user}
-                  activeConversation={activeConversation}
-                  setActiveConversation={setActiveConversation}
-                />
-              </Grid>
-              <Grid item xs>
-                {/* MAIN CHAT CONTENT WINDOW */}
-                {activeConversation ? (
-                  <Grid container direction="column" style={{ borderWidth: 1 }}>
-                    <Grid item style={{ overflow: "auto", height: "70vh" }}>
-                      <>
-                        <div className="messaging-container">
-                          <Messages
-                            activeConversation={activeConversation}
-                            user={user}
-                          />
-                        </div>
-                      </>
-                    </Grid>
-                    <Grid item style={{}}>
-                      <Input
-                        style={{
-                          borderTop: `solid 1px ${theme.colors.greys.grey40}`,
-                        }}
-                        activeConversation={activeConversation}
-                        member={user}
-                      />
-                    </Grid>
-                  </Grid>
-                ) : (
-                  <div className="placeholder">Welcome</div>
+            <Paper className={classes.paper}>
+              <Title>Chats</Title>
+              <Autocomplete
+                multiple
+                id="tags-standard"
+                options={contacts.map((option) => option.domainId)}
+                // getOptionLabel={(option) => option.domainId}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    label="Search Contacts"
+                    placeholder="Contacts"
+                  />
                 )}
+              />
+              <Grid container direction="row" className={classes.mainGrid}>
+                <Grid
+                  item
+                  style={{
+                    overflow: "auto",
+                    height: "60vh",
+                  }}
+                >
+                  {/* SIDEPANEL CHANNELS LIST */}
+                  <ChannelsWrapper
+                    conversations={sortedConversations}
+                    user={user}
+                    activeConversation={activeConversation}
+                    setActiveConversation={setActiveConversation}
+                  />
+                </Grid>
+                <Grid item xs>
+                  {/* MAIN CHAT CONTENT WINDOW */}
+                  {activeConversation ? (
+                    <Grid
+                      container
+                      direction="column"
+                      style={{ borderWidth: 1 }}
+                    >
+                      <Grid item style={{ overflow: "auto", height: "60vh" }}>
+                        <>
+                          <div className="messaging-container">
+                            <Messages
+                              activeConversation={activeConversation}
+                              user={user}
+                            />
+                          </div>
+                        </>
+                      </Grid>
+                      <Grid item style={{}}>
+                        <Input
+                          style={{
+                            borderTop: `solid 1px ${theme.colors.greys.grey40}`,
+                          }}
+                          activeConversation={activeConversation}
+                          member={user}
+                        />
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <div className="placeholder">Welcome</div>
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
+            </Paper>
           ) : (
             <ContactsWrapper
               user={user}

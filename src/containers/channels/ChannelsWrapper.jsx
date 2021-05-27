@@ -34,6 +34,7 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     maxWidth: 360,
     backgroundColor: theme.palette.background.paper,
+    padding: 0
   },
 }));
 
@@ -46,42 +47,32 @@ const ChannelsWrapper = ({
   const classes = useStyles();
 
   return (
-    <>
-      <div className="channel-list-wrapper">
-        {/* <div className="channel-list-header">
-          <div className="channel-list-header-title">Chat</div>
-        </div> */}
-        <List className={classes.root}>
-          {conversations.map((conversation) => (
-            <ListItem
-              key={conversation.sid}
-              selected={conversation.sid === activeConversation?.sid}
-              onClick={(e) => {
-                console.log(conversation);
-                setActiveConversation(conversation);
-              }}
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  {conversation.attributes.isGroupChat ? (
-                    <PeopleRounded />
-                  ) : (
-                    <PersonRounded />
-                  )}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={getShortConversationName(
-                  conversation.friendlyName,
-                  user
-                )}
-                // secondary="Jan 9, 2014"
-              />
-            </ListItem>
-          ))}
-        </List>
-      </div>
-    </>
+    <List className={classes.root}>
+      {conversations.map((conversation) => (
+        <ListItem
+          key={conversation.sid}
+          selected={conversation.sid === activeConversation?.sid}
+          onClick={(e) => {
+            console.log(conversation);
+            setActiveConversation(conversation);
+          }}
+        >
+          <ListItemAvatar>
+            <Avatar>
+              {conversation.attributes.isGroupChat ? (
+                <PeopleRounded />
+              ) : (
+                <PersonRounded />
+              )}
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            primary={getShortConversationName(conversation.friendlyName, user)}
+            // secondary="Jan 9, 2014"
+          />
+        </ListItem>
+      ))}
+    </List>
   );
 };
 

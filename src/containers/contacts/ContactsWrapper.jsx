@@ -102,7 +102,6 @@ const ContactsWrapper = ({ user, onTapContactChat }) => {
             freeSolo
             options={contacts.map((option) => option.domainId)}
             onInputChange={(event, value, reason) => {
-              console.log(event, value, reason);
               setCriteria(value);
             }}
             renderInput={(params) => (
@@ -111,14 +110,16 @@ const ContactsWrapper = ({ user, onTapContactChat }) => {
                 label="Search Contacts"
                 margin="normal"
                 variant="outlined"
+                placeholder="Contacts"
               />
             )}
           />
           <Table size="small">
             <TableHead>
               <TableRow>
-                {/* <TableCell>Date</TableCell>
-                <TableCell align="right">Sale Amount</TableCell> */}
+                <TableCell>Name</TableCell>
+                <TableCell>Job Title</TableCell>
+                <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -131,6 +132,9 @@ const ContactsWrapper = ({ user, onTapContactChat }) => {
                       /> */}
                     {`${contact.lastName}, ${contact.firstName}`}
                     {/* </div> */}
+                  </TableCell>
+                  <TableCell>
+                      {contact.jobTitle}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
