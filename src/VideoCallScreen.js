@@ -22,12 +22,12 @@ const VideoCallScreen = (props) => {
 
   const { location } = props;
   const { state } = location || {};
-  const { email, room, mode } = state || {};
+  const { domainId, conversationId, mode } = state || {};
 
   useEffect(() => {
-    const meetingId = `${uuidv4()}:${room}`;
+    const meetingId = `${uuidv4()}:${conversationId}`;
 
-    createMeetingRequest(meetingId, email).then(async (meetingResponse) => {
+    createMeetingRequest(meetingId, domainId).then(async (meetingResponse) => {
       const joinData = {
         meetingInfo: meetingResponse.JoinInfo.Meeting.Meeting,
         attendeeInfo: meetingResponse.JoinInfo.Attendee.Attendee,

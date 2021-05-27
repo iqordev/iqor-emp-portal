@@ -39,12 +39,11 @@ const Messages = ({ user, activeConversation }) => {
     activeConversation
       .getMessages()
       .then((paginator) => {
-        console.log(paginator.items);
         setMessages(paginator.items);
       })
+      .then(() => activeConversation.on("messageAdded", handleMessageAdded))
+      .catch((error) => console.error(error))
       .finally(() => setIsLoading(false));
-
-    activeConversation.on("messageAdded", handleMessageAdded);
 
     return () => {
       activeConversation.removeAllListeners();
@@ -57,7 +56,6 @@ const Messages = ({ user, activeConversation }) => {
     activeConversation
       .getMessages()
       .then((paginator) => {
-        console.log(paginator.items);
         setMessages(paginator.items);
       })
       .finally(() => setIsLoading(false));
@@ -91,14 +89,10 @@ const Messages = ({ user, activeConversation }) => {
       showName = false;
     }
 
-    let imageUrl = getAttendeeImage(m.author, 'alternate');
+    let imageUrl = getAttendeeImage(m.author, "alternate");
     return (
       <div className="message">
-        <Avatar
-          alt="Remy Sharp"
-          src={imageUrl}
-          style={{ alignSelf: "flex-end" }}
-        />
+        <Avatar src={imageUrl} style={{ alignSelf: "flex-end" }} />
         <ChatBubbleContainer
           timestamp={formatTime(m.dateCreated)}
           key={`message${i.toString()}`}
@@ -137,8 +131,8 @@ const Messages = ({ user, activeConversation }) => {
           }}
           onClick={() => {
             history.push("videocall", {
-              room: activeConversation.sid,
-              email: user.domainId,
+              conversationId: activeConversation.sid,
+              domainId: user.domainId,
               mode: "call",
             });
           }}
@@ -151,8 +145,8 @@ const Messages = ({ user, activeConversation }) => {
           }}
           onClick={() => {
             history.push("videocall", {
-              room: activeConversation.sid,
-              email: user.domainId,
+              conversationId: activeConversation.sid,
+              domainId: user.domainId,
               mode: "video",
             });
           }}

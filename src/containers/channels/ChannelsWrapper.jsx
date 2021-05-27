@@ -16,9 +16,26 @@ import {
   ChannelList,
   ChannelItem,
 } from "amazon-chime-sdk-component-library-react";
+import {
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import { PersonRounded, PeopleRounded } from "@material-ui/icons";
 
 import "./ChannelsWrapper.css";
 import { getShortConversationName } from "../../utils/simplifyConversationName";
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: theme.palette.background.paper,
+  },
+}));
 
 const ChannelsWrapper = ({
   conversations,
@@ -26,34 +43,42 @@ const ChannelsWrapper = ({
   activeConversation,
   setActiveConversation,
 }) => {
+  const classes = useStyles();
+
   return (
     <>
       <div className="channel-list-wrapper">
-        <div className="channel-list-header">
+        {/* <div className="channel-list-header">
           <div className="channel-list-header-title">Chat</div>
-          {/* <IconButton
-            className="create-channel-button channel-options"
-            // onClick={() => setModal("NewChannel")}
-            icon={<Dots width="1.5rem" height="1.5rem" />}
-          /> */}
-        </div>
-        <ChannelList
-          style={{
-            padding: "8px",
-          }}
-        >
+        </div> */}
+        <List className={classes.root}>
           {conversations.map((conversation) => (
-            <ChannelItem
+            <ListItem
               key={conversation.sid}
-              name={getShortConversationName(conversation.friendlyName, user)}
-              isSelected={conversation.sid === activeConversation?.sid}
+              selected={conversation.sid === activeConversation?.sid}
               onClick={(e) => {
-                e.stopPropagation();
                 setActiveConversation(conversation);
               }}
-            />
+            >
+              <ListItemAvatar>
+                <Avatar>
+                  {conversation.attributes.isGroupChat ? (
+                    <PeopleRounded />
+                  ) : (
+                    <PersonRounded />
+                  )}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={getShortConversationName(
+                  conversation.friendlyName,
+                  user
+                )}
+                // secondary="Jan 9, 2014"
+              />
+            </ListItem>
           ))}
-        </ChannelList>
+        </List>
       </div>
     </>
   );

@@ -14,15 +14,15 @@ class WelcomeScreen extends React.Component {
     super(props);
 
     this.state = {
-      email: "",
-      room: "",
+      domainId: "",
+      conversationId: "",
     };
   }
 
   login = () => {
-    const { email, room } = this.state;
-    if (email) {
-      this.props.history.push("home", { room, email });
+    const { domainId, conversationId } = this.state;
+    if (domainId) {
+      this.props.history.push("home", { conversationId, domainId });
     }
   };
 
@@ -31,7 +31,7 @@ class WelcomeScreen extends React.Component {
   };
 
   render() {
-    const { email, room } = this.state;
+    const { domainId, conversationId } = this.state;
     return (
       <>
         <AppBar style={styles.header} elevation={10}>
@@ -51,26 +51,26 @@ class WelcomeScreen extends React.Component {
           <Card style={styles.card} elevation={10}>
             <Grid item style={styles.gridItem}>
               <TextField
-                name="email"
+                name="domainId"
                 required
                 style={styles.textField}
                 label="Domain ID"
                 placeholder="Enter Domain ID"
                 variant="outlined"
-                type="email"
-                value={email}
+                type="domainId"
+                value={domainId}
                 onChange={this.handleChange}
               />
             </Grid>
             {/* <Grid item style={styles.gridItem}>
               <TextField
-                name="room"
+                name="conversationId"
                 required
                 style={styles.textField}
                 label="Room"
-                placeholder="Enter room name"
+                placeholder="Enter conversationId name"
                 variant="outlined"
-                value={room}
+                value={conversationId}
                 onChange={this.handleChange}
               />
             </Grid> */}

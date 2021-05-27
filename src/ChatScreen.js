@@ -32,9 +32,9 @@ class ChatScreen extends React.Component {
     this.scrollDiv = React.createRef();
   }
 
-  getToken = async (email) => {
+  getToken = async (domainId) => {
     const response = await axios.get(
-      `https://iqormobpushnotif-development.azurewebsites.net/api/twilio/token/${email}`
+      `https://iqormobpushnotif-development.azurewebsites.net/api/twilio/token/${domainId}`
     );
     const { data } = response;
     console.log(data);
@@ -44,17 +44,17 @@ class ChatScreen extends React.Component {
   componentDidMount = async () => {
     const { location } = this.props;
     const { state } = location || {};
-    const { email, room } = state || {};
+    const { domainId, conversationId } = state || {};
     let token = "";
 
-    if (!email || !room) {
+    if (!domainId || !conversationId) {
       this.props.history.replace("/");
     }
 
     this.setState({ loading: true });
 
     try {
-      token = await this.getToken(email);
+      token = await this.getToken(domainId);
     } catch {
       throw new Error("unable to get token, please reload this page");
     }
@@ -62,12 +62,12 @@ class ChatScreen extends React.Component {
     const client = await Chat.Client.create(token);
 
     client.on("tokenAboutToExpire", async () => {
-      const token = await this.getToken(email);
+      const token = await this.getToken(domainId);
       client.updateToken(token);
     });
 
     client.on("tokenExpired", async () => {
-      const token = await this.getToken(email);
+      const token = await this.getToken(domainId);
       client.updateToken(token);
     });
 
@@ -79,14 +79,14 @@ class ChatScreen extends React.Component {
     // });
 
     try {
-      const channel = await client.getConversationByUniqueName(room);
+      const channel = await client.getConversationByUniqueName(conversationId);
       await this.joinChannel(channel);
       this.setState({ channel, loading: false });
     } catch {
       // try {
       //   const channel = await client.createChannel({
-      //     uniqueName: room,
-      //     friendlyName: room,
+      //     uniqueName: conversationId,
+      //     friendlyName: conversationId,
       //   });
       //   await this.joinChannel(channel);
       //   this.setState({ channel, loading: false });
@@ -143,7 +143,7 @@ class ChatScreen extends React.Component {
     const { loading, text, messages, channel } = this.state;
     const { location } = this.props;
     const { state } = location || {};
-    const { email, room, roomName } = state || {};
+    const { domainId, conversationId, friendlyName } = state || {};
 
     return (
       <Container component="main" maxWidth="md">
@@ -152,13 +152,13 @@ class ChatScreen extends React.Component {
         </Backdrop>
         <AppBar elevation={10}>
           <Toolbar style={{ justifyContent: "space-between" }}>
-            <Typography variant="h6">{`${roomName}`}</Typography>
+            <Typography variant="h6">{`${friendlyName}`}</Typography>
             <div>
               <IconButton
                 onClick={() => {
                   this.props.history.push("videocall", {
-                    room,
-                    email,
+                    conversationId,
+                    domainId,
                     mode: "call",
                   });
                 }}
@@ -168,8 +168,8 @@ class ChatScreen extends React.Component {
               <IconButton
                 onClick={() => {
                   this.props.history.push("videocall", {
-                    room,
-                    email,
+                    conversationId,
+                    domainId,
                     mode: "video",
                   });
                 }}
@@ -188,7 +188,7 @@ class ChatScreen extends React.Component {
                   <ChatItem
                     key={message.index}
                     message={message}
-                    email={email}
+                    domainId={domainId}
                   />
                 ))}
             </List>

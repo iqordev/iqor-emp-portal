@@ -3,8 +3,8 @@ import { ListItem } from "@material-ui/core";
 
 class ChatItem extends React.Component {
   render() {
-    const { message, email } = this.props;
-    const isOwnMessage = message.author === email;
+    const { message, domainId } = this.props;
+    const isOwnMessage = message.author === domainId;
 
     return (
       <ListItem style={styles.listItem(isOwnMessage)}>

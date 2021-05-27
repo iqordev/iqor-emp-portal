@@ -23,7 +23,7 @@ const uploadObjDefaults = {
   response: null,
   key: "",
 };
-const Input = ({ activeConversation, member }) => {
+const Input = ({ activeConversation }) => {
   const [text, setText] = useState("");
   const inputRef = useRef();
   const uploadRef = useRef();
@@ -101,7 +101,7 @@ const Input = ({ activeConversation, member }) => {
           ],
         });
 
-        await sendConversationMessage();
+        await sendConversationMessage(uuid);
         // await sendChannelMessage(activeChannel, text || " ", member, options);
 
         // Cleanup upload refs
@@ -127,65 +127,73 @@ const Input = ({ activeConversation, member }) => {
     setUploadObj(uploadObjDefaults);
   };
 
-  return (
-    <div className="message-input-container">
-      <form onSubmit={onSubmit} className="message-input-form">
-        <InputComponent
-          onChange={onChange}
-          value={text}
-          type="text"
-          placeholder="Type your message"
-          autoFocus
-          className="text-input"
-          ref={inputRef}
+  if (activeConversation) {
+    return (
+      <div className="message-input-container">
+        <form onSubmit={onSubmit} className="message-input-form">
+          <InputComponent
+            onChange={onChange}
+            value={text}
+            type="text"
+            placeholder="Type your message"
+            autoFocus
+            className="text-input"
+            ref={inputRef}
+          />
+          {uploadObj.file ? (
+            <div className="attachment-preview">
+              <Attachment
+                style={{ margin: "auto 0" }}
+                width="1.5rem"
+                height="1.5rem"
+              />
+              <Label style={{ margin: "auto 0" }}>{uploadObj?.name}</Label>
+              <IconButton icon={<Remove width="1.5rem" height="1.5rem" />} />
+            </div>
+          ) : null}
+        </form>
+        <IconButton
+          className="write-link attach"
+          onClick={(_event) => {
+            uploadRef.current.value = null;
+            uploadRef.current.click();
+          }}
+          icon={<Attachment width="1.5rem" height="1.5rem" />}
         />
-        {uploadObj.file ? (
-          <div className="attachment-preview">
-            <Attachment
-              style={{ margin: "auto 0" }}
-              width="1.5rem"
-              height="1.5rem"
-            />
-            <Label style={{ margin: "auto 0" }}>{uploadObj?.name}</Label>
-            <IconButton icon={<Remove width="1.5rem" height="1.5rem" />} />
-          </div>
-        ) : null}
-      </form>
-      <IconButton
-        className="write-link attach"
-        onClick={(_event) => {
-          uploadRef.current.value = null;
-          uploadRef.current.click();
-        }}
-        icon={<Attachment width="1.5rem" height="1.5rem" />}
-      />
-      <input
-        type="file"
-        accept="file_extension|audio/*|video/*|image/*|media_type"
-        style={{ display: "none" }}
-        ref={uploadRef}
-        onChange={(event) => {
-          const file = event.currentTarget.files[0];
-          if (!file) return;
+        <input
+          type="file"
+          accept="file_extension|audio/*|video/*|image/*|media_type"
+          style={{ display: "none" }}
+          ref={uploadRef}
+          onChange={(event) => {
+            const file = event.currentTarget.files[0];
+            if (!file) return;
 
-          if (file.size / 1024 / 1024 < 5) {
-            setUploadObj({
-              file: file,
-              name: file.name,
-            });
-          } else {
-            notificationDispatch({
-              type: 0,
-              payload: {
-                message: `File (${file.name}) size (${formatBytes(
-                  file.size
-                )}) Maximum supported file size is up to 5MB.`,
-                severity: "error",
-              },
-            });
-          }
-        }}
-      />
+            if (file.size / 1024 / 1024 < 5) {
+              setUploadObj({
+                file: file,
+                name: file.name,
+              });
+            } else {
+              notificationDispatch({
+                type: 0,
+                payload: {
+                  message: `File (${file.name}) size (${formatBytes(
+                    file.size
+                  )}) Maximum supported file size is up to 5MB.`,
+                  severity: "error",
+                },
+              });
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="message-input-container join-channel-message">
+      User doesn't have existing account.
     </div>
   );
 };
