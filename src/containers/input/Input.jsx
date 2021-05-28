@@ -23,7 +23,12 @@ const uploadObjDefaults = {
   response: null,
   key: "",
 };
-const Input = ({ activeConversation }) => {
+const Input = ({
+  activeConversation,
+  isComposing,
+  onFocus,
+  onSubmitIsComposing,
+}) => {
   const [text, setText] = useState("");
   const inputRef = useRef();
   const uploadRef = useRef();
@@ -57,15 +62,27 @@ const Input = ({ activeConversation }) => {
     setText(e.target.value);
   };
 
-  const sendConversationMessage = (uuid) => {
+  const sendConversationMessage = (conversation, uuid) => {
     if (text && String(text).trim()) {
-      activeConversation &&
-        activeConversation.sendMessage(text, { giftedId: uuid });
+      conversation && conversation.sendMessage(text, { giftedId: uuid });
       setText("");
     }
   };
   const onSubmit = async (e) => {
     e.preventDefault();
+
+    let conversation;
+    try {
+      conversation = isComposing
+        ? await onSubmitIsComposing()
+        : activeConversation;
+    } catch (error) {
+      console.error(error);
+      resetState();
+      return;
+    }
+
+    console.log("to submit", conversation);
 
     if (uploadRef.current.files[0]) {
       try {
@@ -74,7 +91,7 @@ const Input = ({ activeConversation }) => {
         //   uploadRef.current.files[0]
         // );
         const uuid = uuidv4();
-        const key = await activeConversation.sendMessage(
+        const key = await conversation.sendMessage(
           {
             contentType: uploadRef.current.files[0].type,
             media: uploadRef.current.files[0],
@@ -101,7 +118,7 @@ const Input = ({ activeConversation }) => {
           ],
         });
 
-        await sendConversationMessage(uuid);
+        await sendConversationMessage(conversation, uuid);
         // await sendChannelMessage(activeChannel, text || " ", member, options);
 
         // Cleanup upload refs
@@ -116,7 +133,7 @@ const Input = ({ activeConversation }) => {
       }
     } else {
       const uuid = uuidv4();
-      await sendConversationMessage(uuid);
+      await sendConversationMessage(conversation, uuid);
     }
     resetState();
   };
@@ -127,7 +144,7 @@ const Input = ({ activeConversation }) => {
     setUploadObj(uploadObjDefaults);
   };
 
-  if (activeConversation) {
+  if (activeConversation || isComposing) {
     return (
       <div className="message-input-container">
         <form onSubmit={onSubmit} className="message-input-form">
@@ -136,8 +153,9 @@ const Input = ({ activeConversation }) => {
             value={text}
             type="text"
             placeholder="Type your message"
-            autoFocus
+            onFocusCapture={onFocus}
             className="text-input"
+            onFocus={onFocus}
             ref={inputRef}
           />
           {uploadObj.file ? (

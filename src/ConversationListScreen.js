@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+
 import clsx from "clsx";
 // import { TabPanel,TabContext   } from "@matereial-ui/lab";
 import {
@@ -22,7 +23,6 @@ import {
   Paper,
   TextField,
 } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
 import {
   ChatBubbleRounded,
   PeopleRounded,
@@ -31,6 +31,7 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  BorderColorRounded,
 } from "@material-ui/icons";
 
 import { useTheme } from "styled-components";
@@ -46,6 +47,7 @@ import { getUniqueName } from "./utils/chatConversationHelper";
 import { convertName } from "./utils/nameHelper";
 import Title from "./components/Title";
 import * as Colors from "./styles/colors";
+import { useNotificationDispatch } from "amazon-chime-sdk-component-library-react";
 
 const Chat = require("@twilio/conversations");
 
@@ -118,9 +120,8 @@ const useStyles = makeStyles((theme) => ({
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
   },
-  mainGrid:{
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(2),
+  mainGrid: {
+    paddingBottom: theme.spacing(2),
   },
   appBarSpacer: theme.mixins.toolbar,
   paper: {
@@ -129,10 +130,15 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
   },
+  chatHeader: {
+    paddingBottom: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
 }));
 
 export default function ConversationListScreen(props) {
   const theme = useTheme();
+  const notificationDispatch = useNotificationDispatch();
   const classes = useStyles();
   const clienRef = useRef();
 
@@ -141,7 +147,11 @@ export default function ConversationListScreen(props) {
   const [activeConversation, setActiveConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [user, setUser] = useState(null);
+
+  const [isComposing, setIsComposing] = useState(false);
   const [contacts, setContacts] = useState([]);
+  const [composeUniqueName, setComposeUniqueName] = useState("");
+  const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
 
   const [tab, setTab] = React.useState(DRAWER_TABS.CHATS);
 
@@ -155,7 +165,7 @@ export default function ConversationListScreen(props) {
 
   const { location } = props;
   const { state } = location || {};
-  const { domainId, conversation } = state || {};
+  const { domainId } = state || {};
   let token = "";
 
   const initialize = async () => {
@@ -179,6 +189,19 @@ export default function ConversationListScreen(props) {
     clienRef.current.on("tokenExpired", async () => {
       const token = await getToken(domainId);
       client.updateToken(token);
+    });
+
+    clienRef.current.on("conversationAdded", (conversation) => {
+      if (conversation.lastMessage) {
+        // TwilioService.getInstance()
+        //   .parseConversationAsync(conversation)
+        //   .then((newConversation) => addConversation(newConversation));
+      } else {
+        setConversations((oldConversation) => [
+          ...oldConversation,
+          conversation,
+        ]);
+      }
     });
 
     clienRef.current
@@ -238,10 +261,122 @@ export default function ConversationListScreen(props) {
         clienRef.current
           .createConversation(conversation)
           .then((conversation) => {
+            conversation.join();
+            conversation.add(contact.domainId, {
+              name: convertName(contact),
+              email: contact.email,
+            });
             setActiveConversation(conversation);
             setTab(DRAWER_TABS.CHATS);
           });
       });
+  };
+
+  const onTapConversation = (conversation) => {
+    setActiveConversation(conversation);
+    setIsComposing(false);
+  };
+
+  const onRecipientChange = (uniqueName, tags) => {
+    setComposeUniqueName(uniqueName);
+    console.log(uniqueName, tags, contacts);
+    const selectedContacts = contacts.filter((item) =>
+      tags.includes(item.domainId)
+    );
+    console.log(selectedContacts);
+
+    setComposeSelectedContacts(
+      selectedContacts.map((contact) => ({
+        domainId: contact.domainId,
+        name: convertName(contact),
+        email: contact.email,
+      }))
+    );
+  };
+
+  const onInputFocus = () => {
+    if (!isComposing) return;
+
+    clienRef.current
+      .getConversationByUniqueName(composeUniqueName)
+      .then((conversation) => {
+        // console.log(conversation);
+        setActiveConversation(conversation);
+        setIsComposing(false);
+        setComposeUniqueName("");
+      })
+      .catch((err) => console.error(err));
+  };
+
+  const onSubmitIsComposing = () => {
+    return new Promise(function (res, rej) {
+      if (!composeUniqueName) {
+        notificationDispatch({
+          type: 0,
+          payload: {
+            message: `You need to add at least one more person to start a chat.`,
+            severity: "error",
+          },
+        });
+        rej(new Error("Invalid recipient"));
+      }
+
+      const selectConversation = (conversation) => {
+        setActiveConversation(conversation);
+        setIsComposing(false);
+        setComposeUniqueName("");
+        setComposeSelectedContacts([]);
+      };
+
+      const CURRENT_USER_COUNT = 1;
+      const friendlyName = `${convertName(user)}|${
+        composeSelectedContacts[0].name
+      }${
+        composeSelectedContacts.length > 1
+          ? `| + ${composeSelectedContacts.length} others`
+          : ""
+      }`;
+
+      const conversation = {
+        uniqueName: composeUniqueName,
+        friendlyName: friendlyName,
+        attributes: {
+          members: [
+            ...composeSelectedContacts,
+            {
+              domainId: user.domainId,
+              name: convertName(user),
+              email: user.email,
+            },
+          ],
+          memberCount: composeSelectedContacts.length + CURRENT_USER_COUNT,
+          isGroupChat: false,
+          isFriendlyNameUpdated: false,
+        },
+      };
+
+      clienRef.current
+        .getConversationByUniqueName(composeUniqueName)
+        .then((conversation) => {
+          selectConversation(conversation);
+          return res(conversation);
+        })
+        .catch(() => {
+          clienRef.current
+            .createConversation(conversation)
+            .then(async (conversation) => {
+              await conversation.join();
+              composeSelectedContacts.forEach(async (tag) => {
+                await conversation.add(tag.domainId, {
+                  name: tag.name,
+                  email: tag.email,
+                });
+              });
+              selectConversation(conversation);
+              return res(conversation);
+            });
+        });
+    });
   };
 
   const sortedConversations = useMemo(() => {
@@ -340,21 +475,6 @@ export default function ConversationListScreen(props) {
         <Container maxWidth="xl" className={classes.container}>
           {tab === DRAWER_TABS.CHATS ? (
             <Paper className={classes.paper}>
-              <Title>Chats</Title>
-              <Autocomplete
-                multiple
-                id="tags-standard"
-                options={contacts.map((option) => option.domainId)}
-                // getOptionLabel={(option) => option.domainId}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Search Contacts"
-                    placeholder="Contacts"
-                  />
-                )}
-              />
               <Grid container direction="row" className={classes.mainGrid}>
                 <Grid
                   item
@@ -363,17 +483,42 @@ export default function ConversationListScreen(props) {
                     height: "60vh",
                   }}
                 >
+                  <Grid container justify="space-between">
+                    <Grid item>
+                      <Typography
+                        component="h2"
+                        variant="h6"
+                        color="primary"
+                        className={classes.chatHeader}
+                      >
+                        Chats
+                      </Typography>
+                    </Grid>
+                    <Grid item>
+                      <div className={classes.chatHeader}>
+                        <IconButton
+                          onClick={() => {
+                            setIsComposing(true);
+                            setActiveConversation(null);
+                          }}
+                        >
+                          <BorderColorRounded fontSize="small" />
+                        </IconButton>
+                      </div>
+                    </Grid>
+                  </Grid>
                   {/* SIDEPANEL CHANNELS LIST */}
                   <ChannelsWrapper
                     conversations={sortedConversations}
                     user={user}
                     activeConversation={activeConversation}
-                    setActiveConversation={setActiveConversation}
+                    onTapConversation={onTapConversation}
+                    isComposing={isComposing}
                   />
                 </Grid>
                 <Grid item xs>
                   {/* MAIN CHAT CONTENT WINDOW */}
-                  {activeConversation ? (
+                  {activeConversation || isComposing ? (
                     <Grid
                       container
                       direction="column"
@@ -383,19 +528,22 @@ export default function ConversationListScreen(props) {
                         <>
                           <div className="messaging-container">
                             <Messages
+                              clientRef={clienRef}
                               activeConversation={activeConversation}
                               user={user}
+                              contacts={contacts}
+                              isComposing={isComposing}
+                              onRecipientChange={onRecipientChange}
                             />
                           </div>
                         </>
                       </Grid>
-                      <Grid item style={{}}>
+                      <Grid item>
                         <Input
-                          style={{
-                            borderTop: `solid 1px ${theme.colors.greys.grey40}`,
-                          }}
                           activeConversation={activeConversation}
-                          member={user}
+                          onFocus={onInputFocus}
+                          isComposing={isComposing}
+                          onSubmitIsComposing={onSubmitIsComposing}
                         />
                       </Grid>
                     </Grid>

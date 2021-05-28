@@ -3,7 +3,7 @@
 // Copyright 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   InfiniteList,
   ChatBubble,
@@ -11,7 +11,15 @@ import {
   formatTime,
 } from "amazon-chime-sdk-component-library-react";
 
-import { IconButton, Avatar } from "@material-ui/core";
+import {
+  IconButton,
+  Avatar,
+  Grid,
+  Typography,
+  makeStyles,
+  TextField,
+} from "@material-ui/core";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import { Videocam, Phone } from "@material-ui/icons";
 import { useHistory } from "react-router";
 
@@ -19,9 +27,34 @@ import "./Messages.css";
 import { getShortConversationName } from "../../utils/simplifyConversationName";
 import AttachmentProcessor from "./AttachmentProcessor";
 import { getAttendeeImage } from "../../utils/ImageHelper";
+import { getUniqueName } from "../../utils/chatConversationHelper";
 
-const Messages = ({ user, activeConversation }) => {
+const useStyles = makeStyles((theme) => ({
+  conversationName: {
+    padding: theme.spacing(2),
+  },
+  grid: {
+    borderBottom: "1px solid grey",
+  },
+  options: {
+    padding: theme.spacing(1),
+  },
+  to: {
+    padding: theme.spacing(1),
+    borderBottom: "1px solid grey",
+  },
+}));
+
+const Messages = ({
+  clientRef,
+  user,
+  activeConversation,
+  contacts,
+  isComposing,
+  onRecipientChange,
+}) => {
   const history = useHistory();
+  const classes = useStyles();
 
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -32,10 +65,12 @@ const Messages = ({ user, activeConversation }) => {
         setMessages((prevMessage) => [...prevMessage, message]);
       }
     },
-    [activeConversation.sid]
+    [activeConversation?.sid]
   );
 
   useEffect(() => {
+    if (!activeConversation) return;
+
     activeConversation
       .getMessages()
       .then((paginator) => {
@@ -50,16 +85,30 @@ const Messages = ({ user, activeConversation }) => {
     };
   }, [activeConversation, handleMessageAdded]);
 
-  const handleScrollTop = async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    if (isComposing) {
+      setMessages([]);
+    }
+    return () => {
+      // cleanup;
+    };
+  }, [isComposing]);
 
-    activeConversation
-      .getMessages()
-      .then((paginator) => {
-        setMessages(paginator.items);
-      })
-      .finally(() => setIsLoading(false));
-  };
+  // const handleScrollTop = async () => {
+  //   if (!activeConversation) {
+  //     setMessages([]);
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+
+  //   activeConversation
+  //     .getMessages()
+  //     .then((paginator) => {
+  //       setMessages(paginator.items);
+  //     })
+  //     .finally(() => setIsLoading(false));
+  // };
 
   const messageList = messages.map((m, i, self) => {
     // if (!m.content) {
@@ -120,44 +169,87 @@ const Messages = ({ user, activeConversation }) => {
     );
   });
 
+  const hasIntalledContacts = useMemo(() => {
+    return contacts.filter((c) => c.hasAppInstalled);
+  }, [contacts]);
+
+  const onToChange = (tags) => {
+    const uniqueName =
+      tags.length > 0 ? getUniqueName(tags, user.domainId) : null;
+    onRecipientChange(uniqueName, tags);
+    clientRef.current
+      .getConversationByUniqueName(uniqueName)
+      .then((conversation) => {
+        conversation.getMessages().then((paginator) => {
+          setMessages(paginator.items);
+        });
+      })
+      .catch((err) => {
+        setMessages([]);
+        console.error("onToChange no conversation found", err);
+      });
+  };
+
   return (
     <div className="message-list-container">
-      <div className="message-list-header">
-        {getShortConversationName(activeConversation.friendlyName, user)}
-
-        <IconButton
-          style={{
-            textAlign: "right",
-          }}
-          onClick={() => {
-            history.push("videocall", {
-              conversationId: activeConversation.sid,
-              domainId: user.domainId,
-              mode: "call",
-            });
-          }}
-        >
-          <Phone />
-        </IconButton>
-        <IconButton
-          style={{
-            textAlign: "right",
-          }}
-          onClick={() => {
-            history.push("videocall", {
-              conversationId: activeConversation.sid,
-              domainId: user.domainId,
-              mode: "video",
-            });
-          }}
-        >
-          <Videocam />
-        </IconButton>
-      </div>
+      {isComposing ? (
+        <div className={classes.to}>
+          <Autocomplete
+            multiple
+            id="tags-standard"
+            options={hasIntalledContacts.map((option) => option.domainId)}
+            onChange={(event, value) => {
+              console.log(value);
+              onToChange(value);
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="To:" placeholder="Contacts" />
+            )}
+          />
+        </div>
+      ) : (
+        <Grid container justify="space-between" className={classes.grid}>
+          <Grid item>
+            <Typography
+              variant="h5"
+              align="center"
+              className={classes.conversationName}
+            >
+              {getShortConversationName(activeConversation.friendlyName, user)}
+            </Typography>
+          </Grid>
+          <Grid item>
+            <div className={classes.options}>
+              <IconButton
+                onClick={() => {
+                  history.push("videocall", {
+                    conversationId: activeConversation.sid,
+                    domainId: user.domainId,
+                    mode: "call",
+                  });
+                }}
+              >
+                <Phone />
+              </IconButton>
+              <IconButton
+                onClick={() => {
+                  history.push("videocall", {
+                    conversationId: activeConversation.sid,
+                    domainId: user.domainId,
+                    mode: "video",
+                  });
+                }}
+              >
+                <Videocam />
+              </IconButton>
+            </div>
+          </Grid>
+        </Grid>
+      )}
       <InfiniteList
         style={{ display: "flex", flexGrow: "1" }}
         items={messageList}
-        onLoad={handleScrollTop}
+        // onLoad={handleScrollTop}
         isLoading={isLoading}
         className="chat-message-list"
       />

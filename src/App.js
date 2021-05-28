@@ -6,6 +6,8 @@ import {
   darkTheme,
   MeetingProvider,
   UserActivityProvider,
+  NotificationProvider,
+  NotificationGroup,
 } from "amazon-chime-sdk-component-library-react";
 import { ThemeProvider } from "styled-components";
 
@@ -14,7 +16,10 @@ function App() {
     <ThemeProvider theme={lightTheme}>
       <MeetingProvider>
         <UserActivityProvider>
-          <Router />
+          <NotificationProvider>
+            <NotificationGroup />
+            <Router />
+          </NotificationProvider>
         </UserActivityProvider>
       </MeetingProvider>
     </ThemeProvider>

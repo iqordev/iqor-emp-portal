@@ -34,27 +34,41 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     maxWidth: 360,
     backgroundColor: theme.palette.background.paper,
-    padding: 0
+    padding: 0,
   },
 }));
 
 const ChannelsWrapper = ({
   conversations,
   user,
+  isComposing,
   activeConversation,
-  setActiveConversation,
+  onTapConversation,
 }) => {
   const classes = useStyles();
 
   return (
     <List className={classes.root}>
+      {isComposing && (
+        <ListItem key={1} selected={isComposing}>
+          <ListItemAvatar>
+            <Avatar>
+              <PersonRounded />
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            primary={"New Chat"}
+            // secondary="Jan 9, 2014"
+          />
+        </ListItem>
+      )}
       {conversations.map((conversation) => (
         <ListItem
           key={conversation.sid}
           selected={conversation.sid === activeConversation?.sid}
           onClick={(e) => {
             console.log(conversation);
-            setActiveConversation(conversation);
+            onTapConversation(conversation);
           }}
         >
           <ListItemAvatar>
