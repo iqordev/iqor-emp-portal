@@ -262,9 +262,9 @@ export default function ConversationListScreen(props) {
       .catch(() => {
         clienRef.current
           .createConversation(conversation)
-          .then((conversation) => {
-            conversation.join();
-            conversation.add(contact.domainId, {
+          .then(async (conversation) => {
+            await conversation.join();
+            await conversation.add(contact.domainId, {
               name: convertName(contact),
               email: contact.email,
             });
