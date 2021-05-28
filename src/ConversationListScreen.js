@@ -208,7 +208,9 @@ export default function ConversationListScreen(props) {
       .getSubscribedConversations()
       .then((paginator) => {
         console.log(paginator.items);
-        setConversations(paginator.items.reverse());
+        const newConversations = paginator.items.reverse();
+        setConversations(newConversations);
+        setActiveConversation(newConversations[0]);
       })
       .finally(setLoading(false));
   };
@@ -295,7 +297,7 @@ export default function ConversationListScreen(props) {
   };
 
   const onInputFocus = () => {
-    if (!isComposing) return;
+    if (!isComposing || !composeUniqueName) return;
 
     clienRef.current
       .getConversationByUniqueName(composeUniqueName)
@@ -478,9 +480,10 @@ export default function ConversationListScreen(props) {
               <Grid container direction="row" className={classes.mainGrid}>
                 <Grid
                   item
+                  xs={2}
                   style={{
                     overflow: "auto",
-                    height: "60vh",
+                    height: "75vh",
                   }}
                 >
                   <Grid container justify="space-between">
@@ -516,7 +519,7 @@ export default function ConversationListScreen(props) {
                     isComposing={isComposing}
                   />
                 </Grid>
-                <Grid item xs>
+                <Grid item xs={10}>
                   {/* MAIN CHAT CONTENT WINDOW */}
                   {activeConversation || isComposing ? (
                     <Grid
@@ -524,7 +527,13 @@ export default function ConversationListScreen(props) {
                       direction="column"
                       style={{ borderWidth: 1 }}
                     >
-                      <Grid item style={{ overflow: "auto", height: "60vh" }}>
+                      <Grid
+                        item
+                        style={{
+                          overflow: "auto",
+                          height: "75vh",
+                        }}
+                      >
                         <>
                           <div className="messaging-container">
                             <Messages
@@ -556,6 +565,7 @@ export default function ConversationListScreen(props) {
           ) : (
             <ContactsWrapper
               user={user}
+              contacts={contacts}
               setActiveConversation={setActiveConversation}
               onTapContactChat={onTapContactChat}
             />

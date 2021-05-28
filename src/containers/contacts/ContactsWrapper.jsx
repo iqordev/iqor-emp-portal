@@ -63,22 +63,22 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ContactsWrapper = ({ user, onTapContactChat }) => {
+const ContactsWrapper = ({ user, onTapContactChat, contacts }) => {
   const classes = useStyles();
   const history = useHistory();
 
-  const [contacts, setContacts] = useState([]);
+  // const [contacts, setContacts] = useState([]);
   const [criteria, setCriteria] = useState("");
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      const contacts = await searchContacts("");
-      console.log("contacts", contacts);
-      setContacts(contacts);
-    };
+  // useEffect(() => {
+  //   const fetchContacts = async () => {
+  //     const contacts = await searchContacts("");
+  //     console.log("contacts", contacts);
+  //     setContacts(contacts);
+  //   };
 
-    fetchContacts();
-  }, []);
+  //   fetchContacts();
+  // }, []);
 
   const filteredContacts = useMemo(() => {
     return criteria
@@ -133,9 +133,7 @@ const ContactsWrapper = ({ user, onTapContactChat }) => {
                     {`${contact.lastName}, ${contact.firstName}`}
                     {/* </div> */}
                   </TableCell>
-                  <TableCell>
-                      {contact.jobTitle}
-                  </TableCell>
+                  <TableCell>{contact.jobTitle}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       color="primary"
