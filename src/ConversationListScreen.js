@@ -23,6 +23,8 @@ import {
   Paper,
   TextField,
   Backdrop,
+  MenuItem,
+  Menu,
   CircularProgress,
 } from "@material-ui/core";
 import {
@@ -30,26 +32,34 @@ import {
   PeopleRounded,
   Inbox,
   Mail,
-  Menu,
+  Menu as MenuIcon,
+  AccountCircle,
   ChevronLeft,
   ChevronRight,
   BorderColorRounded,
 } from "@material-ui/icons";
 
 import { useTheme } from "styled-components";
+import { useNotificationDispatch } from "amazon-chime-sdk-component-library-react";
+import { useMsal } from "@azure/msal-react";
+
 import "./index.css";
 
+// api
 import { getToken, getUser, searchContacts, signIn } from "./api";
+
+//  components
+import Title from "./components/Title";
+import ContactsWrapper from "./containers/contacts/ContactsWrapper";
 import ChannelsWrapper from "./containers/channels/ChannelsWrapper";
 import Messages from "./containers/messages/Messages";
 import Input from "./containers/input/Input";
-import ContactsWrapper from "./containers/contacts/ContactsWrapper";
+
+// utils
 import { DRAWER_TABS } from "./constants/DrawerTabs";
 import { getUniqueName } from "./utils/chatConversationHelper";
 import { convertName } from "./utils/nameHelper";
-import Title from "./components/Title";
 import * as Colors from "./styles/colors";
-import { useNotificationDispatch } from "amazon-chime-sdk-component-library-react";
 import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
 
@@ -138,29 +148,33 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(2),
     paddingRight: theme.spacing(2),
   },
+  title: {
+    flexGrow: 1,
+  },
 }));
 
 export default function ConversationListScreen(props) {
+  const { instance } = useMsal();
   const theme = useTheme();
   const notificationDispatch = useNotificationDispatch();
   const classes = useStyles();
   const clienRef = useRef();
 
+  // UI
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const toggleLoading = () => setLoading((prev) => !prev);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
 
-  const [activeConversation, setActiveConversation] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [user, setUser] = useState(null);
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-  const [isComposing, setIsComposing] = useState(false);
-  const [contacts, setContacts] = useState([]);
-  const [composeUniqueName, setComposeUniqueName] = useState("");
-  const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const [tab, setTab] = useState(DRAWER_TABS.CHATS);
-
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -169,54 +183,40 @@ export default function ConversationListScreen(props) {
     setOpen(false);
   };
 
+  // selecting conversation
+  const [activeConversation, setActiveConversation] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  // const [user, setUser] = useState(null);
+
+  // composing
+  const [isComposing, setIsComposing] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [composeUniqueName, setComposeUniqueName] = useState("");
+  const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
+
   const { location } = props;
   const { state } = location || {};
-  const { domainId } = state || {};
+  const { user, chatToken } = state || {};
 
   const initialize = async () => {
-    let twilioToken = "";
-    let currentUser;
-    try {
-      const device = deviceDetect();
-      console.log(device);
-
-      const deviceId = localStorage.getItem("@deviceId") ?? uuidv4();
-      const { chatToken, token } = await signIn({
-        device: {
-          id: deviceId,
-          ...device,
-        },
-      });
-
-      twilioToken = chatToken;
-      localStorage.setItem("@accessToken", token);
-      localStorage.setItem("@deviceId", deviceId);
-
-      currentUser = await getUser();
-      setUser(currentUser);
-      console.log(currentUser);
-    } catch {
-      throw new Error("unable to get token, please reload this page");
-    }
-
-    const client = await Chat.Client.create(twilioToken);
+    const client = await Chat.Client.create(chatToken);
     clienRef.current = client;
 
     await clienRef.current.user.updateFriendlyName(
-      `${currentUser.lastName}, ${currentUser.firstName}`
+      `${user.lastName}, ${user.firstName}`
     );
 
     await clienRef.current.user.updateAttributes({
-      email: currentUser.email,
+      email: user.email,
     });
 
     clienRef.current.on("tokenAboutToExpire", async () => {
-      const token = await getToken(domainId);
+      const token = await getToken(user.domainId);
       client.updateToken(token);
     });
 
     clienRef.current.on("tokenExpired", async () => {
-      const token = await getToken(domainId);
+      const token = await getToken(user.domainId);
       client.updateToken(token);
     });
 
@@ -459,11 +459,46 @@ export default function ConversationListScreen(props) {
             edge="start"
             className={clsx(classes.menuButton, open && classes.hide)}
           >
-            <Menu />
+            <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap>
+          <Typography variant="h6" noWrap className={classes.title}>
             Chat App
           </Typography>
+          <div>
+            <IconButton
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="inherit"
+            >
+              <AccountCircle />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={openMenu}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={handleClose}>Profile</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  instance.logoutRedirect();
+                }}
+              >
+                Logout
+              </MenuItem>
+            </Menu>
+          </div>
         </Toolbar>
       </AppBar>
       <Drawer

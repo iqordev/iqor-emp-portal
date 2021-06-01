@@ -9,7 +9,6 @@ const instance = axios.create({
 instance.interceptors.request.use(
   async (config) => {
     const accessToken = localStorage.getItem("@accessToken");
-    console.log("accessToken", accessToken);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -37,7 +36,7 @@ export const getToken = async (domainId) => {
 
 export const signIn = async (userDTO) => {
   return instance
-    .post("/user/signin/alternate", userDTO)
+    .post("/user/signin/azure", userDTO)
     .then((res) => res.data)
     .catch((err) => console.error("[signIn]: ", err));
 };
