@@ -18,9 +18,10 @@ import {
   Typography,
   makeStyles,
   TextField,
+  Popover,
 } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { Videocam, Phone } from "@material-ui/icons";
+import { Videocam, Phone, People } from "@material-ui/icons";
 import { useHistory } from "react-router";
 
 import "./Messages.css";
@@ -43,6 +44,12 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(1),
     borderBottom: "1px solid grey",
   },
+  popover: {
+    pointerEvents: "none",
+  },
+  paper: {
+    padding: theme.spacing(1),
+  },
 }));
 
 const Messages = ({
@@ -58,6 +65,18 @@ const Messages = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [participants, setParticipants] = useState([]);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
 
   const handleMessageAdded = useCallback(
     (message) => {
@@ -76,6 +95,8 @@ const Messages = ({
       .then((paginator) => {
         setMessages(paginator.items);
       })
+      .then(() => activeConversation.getParticipants())
+      .then((participants) => setParticipants(participants))
       .then(() => activeConversation.on("messageAdded", handleMessageAdded))
       .catch((error) => console.error(error))
       .finally(() => setIsLoading(false));
@@ -241,6 +262,44 @@ const Messages = ({
                 }}
               >
                 <Videocam />
+              </IconButton>
+
+              <IconButton
+                onMouseEnter={handlePopoverOpen}
+                onMouseLeave={handlePopoverClose}
+              >
+                <People />
+                <Popover
+                  id="mouse-over-popover"
+                  className={classes.popover}
+                  classes={{
+                    paper: classes.paper,
+                  }}
+                  open={open}
+                  anchorEl={anchorEl}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                  onClose={handlePopoverClose}
+                  disableRestoreFocus
+                >
+                  {participants.map((participant) => {
+                    let imageUrl = getAttendeeImage(
+                      participant.identity,
+                      "alternate"
+                    );
+                    return (
+                      <Typography key={participant.identity}>
+                        {participant.identity}
+                      </Typography>
+                    );
+                  })}
+                </Popover>
               </IconButton>
             </div>
           </Grid>

@@ -22,6 +22,8 @@ import {
   Container,
   Paper,
   TextField,
+  Backdrop,
+  CircularProgress,
 } from "@material-ui/core";
 import {
   ChatBubbleRounded,
@@ -37,7 +39,7 @@ import {
 import { useTheme } from "styled-components";
 import "./index.css";
 
-import { getToken, getUser, searchContacts } from "./api";
+import { getToken, getUser, searchContacts, signIn } from "./api";
 import ChannelsWrapper from "./containers/channels/ChannelsWrapper";
 import Messages from "./containers/messages/Messages";
 import Input from "./containers/input/Input";
@@ -48,6 +50,8 @@ import { convertName } from "./utils/nameHelper";
 import Title from "./components/Title";
 import * as Colors from "./styles/colors";
 import { useNotificationDispatch } from "amazon-chime-sdk-component-library-react";
+import { deviceDetect } from "react-device-detect";
+import { v4 as uuidv4 } from "uuid";
 
 const Chat = require("@twilio/conversations");
 
@@ -142,8 +146,10 @@ export default function ConversationListScreen(props) {
   const classes = useStyles();
   const clienRef = useRef();
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const toggleLoading = () => setLoading((prev) => !prev);
+
   const [activeConversation, setActiveConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [user, setUser] = useState(null);
@@ -153,7 +159,7 @@ export default function ConversationListScreen(props) {
   const [composeUniqueName, setComposeUniqueName] = useState("");
   const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
 
-  const [tab, setTab] = React.useState(DRAWER_TABS.CHATS);
+  const [tab, setTab] = useState(DRAWER_TABS.CHATS);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -166,20 +172,43 @@ export default function ConversationListScreen(props) {
   const { location } = props;
   const { state } = location || {};
   const { domainId } = state || {};
-  let token = "";
 
   const initialize = async () => {
+    let twilioToken = "";
+    let currentUser;
     try {
-      token = await getToken(domainId);
-      const currentUser = await getUser();
+      const device = deviceDetect();
+      console.log(device);
+
+      const deviceId = localStorage.getItem("@deviceId") ?? uuidv4();
+      const { chatToken, token } = await signIn({
+        device: {
+          id: deviceId,
+          ...device,
+        },
+      });
+
+      twilioToken = chatToken;
+      localStorage.setItem("@accessToken", token);
+      localStorage.setItem("@deviceId", deviceId);
+
+      currentUser = await getUser();
       setUser(currentUser);
       console.log(currentUser);
     } catch {
       throw new Error("unable to get token, please reload this page");
     }
 
-    const client = await Chat.Client.create(token);
+    const client = await Chat.Client.create(twilioToken);
     clienRef.current = client;
+
+    await clienRef.current.user.updateFriendlyName(
+      `${currentUser.lastName}, ${currentUser.firstName}`
+    );
+
+    await clienRef.current.user.updateAttributes({
+      email: currentUser.email,
+    });
 
     clienRef.current.on("tokenAboutToExpire", async () => {
       const token = await getToken(domainId);
@@ -227,6 +256,7 @@ export default function ConversationListScreen(props) {
   }, []);
 
   const onTapContactChat = (contact) => {
+    setLoading(true);
     const MAX_PARTICIPANT_P2P = 2;
     const uniqueName = getUniqueName([contact.domainId], user.domainId);
     const friendlyName = `${convertName(user)}|${convertName(contact)}`;
@@ -271,7 +301,8 @@ export default function ConversationListScreen(props) {
             setActiveConversation(conversation);
             setTab(DRAWER_TABS.CHATS);
           });
-      });
+      })
+      .finally(setLoading(false));
   };
 
   const onTapConversation = (conversation) => {
@@ -312,6 +343,7 @@ export default function ConversationListScreen(props) {
 
   const onSubmitIsComposing = () => {
     return new Promise(function (res, rej) {
+      setLoading(true);
       if (!composeUniqueName) {
         notificationDispatch({
           type: 0,
@@ -377,7 +409,8 @@ export default function ConversationListScreen(props) {
               selectConversation(conversation);
               return res(conversation);
             });
-        });
+        })
+        .finally(setLoading(false));
     });
   };
 
@@ -408,6 +441,9 @@ export default function ConversationListScreen(props) {
 
   return (
     <div className={classes.root}>
+      <Backdrop open={loading} style={{ zIndex: 99999 }}>
+        <CircularProgress style={{ color: "white" }} />
+      </Backdrop>
       <CssBaseline />
       <AppBar
         position="fixed"

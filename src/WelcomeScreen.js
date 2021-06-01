@@ -9,6 +9,7 @@ import {
   Button,
 } from "@material-ui/core";
 import * as Colors from "./styles/colors";
+import { getToken } from "./api";
 
 class WelcomeScreen extends React.Component {
   constructor(props) {
@@ -16,14 +17,15 @@ class WelcomeScreen extends React.Component {
 
     this.state = {
       domainId: "",
-      conversationId: "",
     };
   }
 
   login = () => {
-    const { domainId, conversationId } = this.state;
+    const { domainId } = this.state;
     if (domainId) {
-      this.props.history.push("home", { conversationId, domainId });
+      getToken(domainId).then(() => {
+        this.props.history.push("home", { domainId });
+      });
     }
   };
 
@@ -32,7 +34,7 @@ class WelcomeScreen extends React.Component {
   };
 
   render() {
-    const { domainId, conversationId } = this.state;
+    const { domainId } = this.state;
     return (
       <>
         <AppBar style={styles.header} elevation={10}>
@@ -61,18 +63,6 @@ class WelcomeScreen extends React.Component {
                 onChange={this.handleChange}
               />
             </Grid>
-            {/* <Grid item style={styles.gridItem}>
-              <TextField
-                name="conversationId"
-                required
-                style={styles.textField}
-                label="Room"
-                placeholder="Enter conversationId name"
-                variant="outlined"
-                value={conversationId}
-                onChange={this.handleChange}
-              />
-            </Grid> */}
             <Grid item style={styles.gridItem}>
               <Button
                 color="primary"

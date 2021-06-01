@@ -9,7 +9,7 @@ const instance = axios.create({
 instance.interceptors.request.use(
   async (config) => {
     const accessToken = localStorage.getItem("@accessToken");
-    // console.log("accessToken", accessToken);
+    console.log("accessToken", accessToken);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -35,11 +35,18 @@ export const getToken = async (domainId) => {
   return data.chatToken;
 };
 
+export const signIn = async (userDTO) => {
+  return instance
+    .post("/user/signin/alternate", userDTO)
+    .then((res) => res.data)
+    .catch((err) => console.error("[signIn]: ", err));
+};
+
 export const getUser = async () => {
   return instance
     .get("/user")
     .then((res) => res.data)
-    .catch((err) => console.error("[MeetingScreen]: ", err));
+    .catch((err) => console.error("[getUser]: ", err));
 };
 
 export const startCall = async (currentMeetingId, mode, domainIds) => {
