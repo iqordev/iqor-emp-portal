@@ -8,10 +8,10 @@ import {
   useMeetingManager,
   useUserActivityState,
 } from "amazon-chime-sdk-component-library-react";
-import { createMeetingRequest, startCall } from "./api";
+import { createMeetingRequest, startCall } from "../api";
 import { v4 as uuidv4 } from "uuid";
-import Attendees from "./components/Attendees";
-import ControlBar from "./components/ControlBar";
+import Attendees from "../components/Attendees";
+import ControlBar from "../components/ControlBar";
 
 const VideoCallScreen = (props) => {
   const meetingManager = useMeetingManager();

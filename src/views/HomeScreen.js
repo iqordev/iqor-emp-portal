@@ -43,27 +43,27 @@ import { useTheme } from "styled-components";
 import { useNotificationDispatch } from "amazon-chime-sdk-component-library-react";
 import { useMsal } from "@azure/msal-react";
 
-import "./index.css";
+import "./HomeScreen.css";
 
 // api
-import { getToken, getUser, searchContacts, signIn } from "./api";
+import { getToken, getUser, searchContacts, signIn } from "../api";
 
 //  components
-import Title from "./components/Title";
-import ContactsWrapper from "./containers/contacts/ContactsWrapper";
-import ChannelsWrapper from "./containers/channels/ChannelsWrapper";
-import Messages from "./containers/messages/Messages";
-import Input from "./containers/input/Input";
+import Title from "../components/Title";
+import ContactsWrapper from "../containers/contacts/ContactsWrapper";
+import ChannelsWrapper from "../containers/channels/ChannelsWrapper";
+import Messages from "../containers/messages/Messages";
+import Input from "../containers/input/Input";
 
 // utils
-import { DRAWER_TABS } from "./constants/DrawerTabs";
-import { getUniqueName } from "./utils/chatConversationHelper";
-import { convertName } from "./utils/nameHelper";
-import * as Colors from "./styles/colors";
+import { DRAWER_TABS } from "../constants/DrawerTabs";
+import { getUniqueName } from "../utils/chatConversationHelper";
+import { convertName } from "../utils/nameHelper";
+import * as Colors from "../styles/colors";
 import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
 
-import { useAuthContext } from "./providers/AuthProvider";
+import { useAuthContext } from "../providers/AuthProvider";
 
 const Chat = require("@twilio/conversations");
 
@@ -155,7 +155,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function ConversationListScreen(props) {
+export default function HomeScreen(props) {
   const { instance } = useMsal();
   const theme = useTheme();
   const notificationDispatch = useNotificationDispatch();

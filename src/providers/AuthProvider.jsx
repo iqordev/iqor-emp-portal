@@ -59,6 +59,7 @@ const AuthProvider = ({ children }) => {
             account: accounts[0],
             ...loginRequest,
           });
+          setIsAuthenticated(true);
 
           localStorage.setItem("@accessToken", response.idToken);
 
@@ -74,7 +75,6 @@ const AuthProvider = ({ children }) => {
 
           localStorage.setItem("@deviceId", deviceId);
           setUser(await getUser());
-          setIsAuthenticated(true);
         }
       } catch (error) {
         console.error(error);

@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter, Switch, Route } from "react-router-dom";
-import WelcomeScreen from "./WelcomeScreen";
-import ConversationListScreen from "./ConversationListScreen";
-import VideoCallScreen from "./VideoCallScreen";
-import Authenticated from './components/Authenticated';
+import SignInScreen from "./views/SignInScreen";
+import HomeScreen from "./views/HomeScreen";
+import VideoCallScreen from "./views/VideoCallScreen";
+import Authenticated from "./components/Authenticated";
 
 function Router() {
   return (
@@ -11,8 +11,8 @@ function Router() {
       <Authenticated />
       <Switch>
         <Route exact path="/videocall" component={VideoCallScreen} />
-        <Route exact path="/home" component={ConversationListScreen} />
-        <Route path="/" component={WelcomeScreen} />
+        <Route exact path="/home" component={HomeScreen} />
+        <Route path="/" component={SignInScreen} />
       </Switch>
     </BrowserRouter>
   );

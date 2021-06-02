@@ -20,9 +20,9 @@ import {
 } from "@material-ui/core";
 import { LockOutlined as LockOutlinedIcon } from "@material-ui/icons";
 import { SiMicrosoftazure } from "react-icons/si";
-import * as Colors from "./styles/colors";
+import * as Colors from "../styles/colors";
 
-import { getToken } from "./api";
+import { getToken } from "../api";
 import { useMsal } from "@azure/msal-react";
 import { useHistory } from "react-router-dom";
 import {
@@ -30,13 +30,13 @@ import {
   UnauthenticatedTemplate,
   useIsAuthenticated,
 } from "@azure/msal-react";
-import { loginRequest } from "./config/authConfig";
+import { loginRequest } from "../config/authConfig";
 
 import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
-import { getUser, searchContacts, signIn } from "./api";
+import { getUser, searchContacts, signIn } from "../api";
 
-import { useAuthContext } from "./providers/AuthProvider";
+import { useAuthContext } from "../providers/AuthProvider";
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -69,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
   appBarSpacer: theme.mixins.toolbar,
 }));
 
-const WelcomeScreen = () => {
+const SignInScreen = () => {
   const classes = useStyles();
   const { userSignIn } = useAuthContext();
 
@@ -197,4 +197,4 @@ const WelcomeScreen = () => {
   );
 };
 
-export default WelcomeScreen;
+export default SignInScreen;
