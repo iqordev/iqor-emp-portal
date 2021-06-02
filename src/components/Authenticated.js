@@ -10,7 +10,7 @@ const Authenticated = ({ children }) => {
 
   useEffect(() => {
     console.log("isAuthenticated", isAuthenticated);
-    
+
     if (isAuthenticated) {
       //Cleanup notifications
       // notificationDispatch({
@@ -19,7 +19,7 @@ const Authenticated = ({ children }) => {
       // });
       history.push("home");
     } else {
-      // history.push("/");
+      history.push("/");
     }
   }, [isAuthenticated]);
 
