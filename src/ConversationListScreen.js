@@ -63,6 +63,8 @@ import * as Colors from "./styles/colors";
 import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
 
+import { useAuthContext } from "./providers/AuthProvider";
+
 const Chat = require("@twilio/conversations");
 
 const drawerWidth = 240;
@@ -160,6 +162,8 @@ export default function ConversationListScreen(props) {
   const classes = useStyles();
   const clienRef = useRef();
 
+  const { user, chatToken } = useAuthContext();
+
   // UI
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -193,10 +197,6 @@ export default function ConversationListScreen(props) {
   const [contacts, setContacts] = useState([]);
   const [composeUniqueName, setComposeUniqueName] = useState("");
   const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
-
-  const { location } = props;
-  const { state } = location || {};
-  const { user, chatToken } = state || {};
 
   const initialize = async () => {
     const client = await Chat.Client.create(chatToken);
@@ -251,9 +251,10 @@ export default function ConversationListScreen(props) {
   };
 
   useEffect(() => {
-    initialize();
-    fetchContacts();
-  }, []);
+    if (user && chatToken) {
+      initialize().then(fetchContacts()).finally(setLoading(false));
+    }
+  }, [user, chatToken]);
 
   const onTapContactChat = (contact) => {
     setLoading(true);
@@ -352,6 +353,8 @@ export default function ConversationListScreen(props) {
             severity: "error",
           },
         });
+
+        setLoading(false);
         rej(new Error("Invalid recipient"));
       }
 

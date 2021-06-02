@@ -36,6 +36,8 @@ import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
 import { getUser, searchContacts, signIn } from "./api";
 
+import { useAuthContext } from "./providers/AuthProvider";
+
 const useStyles = makeStyles((theme) => ({
   button: {
     margin: theme.spacing(1),
@@ -69,96 +71,35 @@ const useStyles = makeStyles((theme) => ({
 
 const WelcomeScreen = () => {
   const classes = useStyles();
-
-  const history = useHistory();
-  const isAuthenticated = useIsAuthenticated();
-  const { instance, accounts, inProgress } = useMsal();
+  const { userSignIn } = useAuthContext();
 
   const [loading, setLoading] = useState(false);
-  const [domainId, setDomainId] = useState("");
-  const [password, setPassword] = useState("");
+  // const [domainId, setDomainId] = useState("");
+  // const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    if (inProgress === "none" && accounts.length > 0) {
-      // Retrieve an access token
-      instance
-        .acquireTokenSilent({
-          account: accounts[0],
-          ...loginRequest,
-        })
-        .then(async (response) => {
-          console.log(response);
-          localStorage.setItem("@accessToken", response.idToken);
-          await authenticate();
+  // const handleIdChange = (event) => {
+  //   setDomainId(event.target.value);
+  // };
 
-          if (response.accessToken) {
-            return response.accessToken;
-          }
-          return null;
-        })
-        .catch((err) => console.error(err));
-    }
-  }, [inProgress, accounts, instance]);
+  // const handlePasswordChange = (event) => {
+  //   setPassword(event.target.value);
+  // };
 
-  const authenticate = async () => {
-    const device = deviceDetect();
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
 
-    const deviceId = localStorage.getItem("@deviceId") ?? uuidv4();
-    const { chatToken } = await signIn({
-      device: {
-        id: deviceId,
-        ...device,
-      },
-    });
+  //   setLoading(true);
+  //   alert("A name was submitted: " + domainId + password);
 
-    // localStorage.setItem("@accessToken", token);
-    localStorage.setItem("@deviceId", deviceId);
-    const currentUser = await getUser();
+  //   if (domainId && password === "testpassword") {
+  //   }
 
-    history.push("home", {
-      user: currentUser,
-      chatToken,
-    });
-  };
+  //   setLoading(false);
+  // };
 
   const loginPopup = () => {
     setLoading(true);
-
-    instance
-      .loginPopup()
-      .then(async (response) => {
-        console.log(response);
-        localStorage.setItem("@accessToken", response.idToken);
-        await authenticate();
-
-        if (response.accessToken) {
-          return response.accessToken;
-        }
-        return null;
-      })
-      .catch((err) => console.error(err))
-      .finally(setLoading(false));
-  };
-
-  const handleIdChange = (event) => {
-    setDomainId(event.target.value);
-  };
-
-  const handlePasswordChange = (event) => {
-    setPassword(event.target.value);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    setLoading(true);
-    alert("A name was submitted: " + domainId + password);
-
-    if (domainId && password === "testpassword") {
-      await getToken(domainId);
-      await authenticate();
-    }
-
+    userSignIn();
     setLoading(false);
   };
 

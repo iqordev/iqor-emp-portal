@@ -1,16 +1,16 @@
 import React from "react";
 import { BrowserRouter, Switch, Route } from "react-router-dom";
 import WelcomeScreen from "./WelcomeScreen";
-import ChatScreen from "./ChatScreen";
 import ConversationListScreen from "./ConversationListScreen";
-import VideoCallScreen from './VideoCallScreen'
+import VideoCallScreen from "./VideoCallScreen";
+import Authenticated from './components/Authenticated';
 
 function Router() {
   return (
     <BrowserRouter>
+      <Authenticated />
       <Switch>
         <Route exact path="/videocall" component={VideoCallScreen} />
-        <Route exact path="/chat" component={ChatScreen} />
         <Route exact path="/home" component={ConversationListScreen} />
         <Route path="/" component={WelcomeScreen} />
       </Switch>

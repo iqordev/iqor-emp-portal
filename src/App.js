@@ -11,6 +11,9 @@ import {
 } from "amazon-chime-sdk-component-library-react";
 import { useHistory } from "react-router-dom";
 
+// providers
+import { AuthProvider } from "./providers/AuthProvider";
+
 // MSAL imports
 import { MsalProvider } from "@azure/msal-react";
 import { CustomNavigationClient } from "./utils/NavigationClient";
@@ -27,7 +30,9 @@ function App({ pca }) {
         <UserActivityProvider>
           <NotificationProvider>
             <NotificationGroup />
-            <Router />
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
           </NotificationProvider>
         </UserActivityProvider>
       </MeetingProvider>

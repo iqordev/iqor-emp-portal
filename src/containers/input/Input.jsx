@@ -1,8 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-has-content */
-/* eslint-disable import/no-unresolved */
-// Copyright 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Input as InputComponent,
