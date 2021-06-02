@@ -77,8 +77,20 @@ export async function endMeetingRequest(meetingName) {
 }
 
 export const searchContacts = async (searchTerm) => {
-  const response = await instance.get(`/user/contacts/search/${searchTerm}`);
+  const response = await instance.get(`/contacts/${searchTerm}`);
 
+  return response.data;
+};
+
+export const searchAvailableContacts = async (searchTerm) => {
+  const response = await instance.get(`/contacts/available/${searchTerm}`);
+  return response.data;
+};
+
+export const saveContacts = async (contacts) => {
+  const response = await instance.post("/contacts", {
+    domainIds: contacts,
+  });
   return response.data;
 };
 

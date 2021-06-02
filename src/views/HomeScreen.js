@@ -46,7 +46,13 @@ import { useMsal } from "@azure/msal-react";
 import "./HomeScreen.css";
 
 // api
-import { getToken, getUser, searchContacts, signIn } from "../api";
+import {
+  getToken,
+  getUser,
+  saveContacts,
+  searchContacts,
+  signIn,
+} from "../api";
 
 //  components
 import Title from "../components/Title";
@@ -417,6 +423,19 @@ export default function HomeScreen(props) {
     });
   };
 
+  const onSaveContacts = async (selectedContacts) => {
+    try {
+      setLoading(true);
+      await saveContacts(selectedContacts);
+      const updatedContacts = await searchContacts("");
+
+      setContacts(updatedContacts);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const sortedConversations = useMemo(() => {
     const sortedResult =
       conversations.length > 0
@@ -557,7 +576,7 @@ export default function HomeScreen(props) {
                   xs={2}
                   style={{
                     overflow: "auto",
-                    height: "75vh",
+                    height: "70vh",
                   }}
                 >
                   <Grid container justify="space-between">
@@ -605,7 +624,7 @@ export default function HomeScreen(props) {
                         item
                         style={{
                           overflow: "auto",
-                          height: "75vh",
+                          height: "70vh",
                         }}
                       >
                         <>
@@ -642,6 +661,7 @@ export default function HomeScreen(props) {
               contacts={contacts}
               setActiveConversation={setActiveConversation}
               onTapContactChat={onTapContactChat}
+              onSaveContacts={onSaveContacts}
             />
           )}
         </Container>

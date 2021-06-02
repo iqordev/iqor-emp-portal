@@ -4,11 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 
 import {
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
+  Button,
   TextField,
   Grid,
   Paper,
@@ -27,6 +23,7 @@ import {
   ChatBubbleRounded,
   CallRounded,
   VideocamRounded,
+  PersonAdd as PersonAddIcon,
 } from "@material-ui/icons";
 
 import "./ContactsWrapper.css";
@@ -37,6 +34,7 @@ import { useHistory } from "react-router";
 import { CALL_TYPE } from "../../constants/CallType";
 import { convertName } from "../../utils/nameHelper";
 import { getUniqueName } from "../../utils/chatConversationHelper";
+import AddContactModal from "./AddContactModal";
 
 function preventDefault(event) {
   event.preventDefault();
@@ -59,12 +57,28 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ContactsWrapper = ({ user, onTapContactChat, contacts }) => {
+const ContactsWrapper = ({
+  user,
+  onTapContactChat,
+  onSaveContacts,
+  contacts,
+}) => {
   const classes = useStyles();
   const history = useHistory();
 
   // const [contacts, setContacts] = useState([]);
   const [criteria, setCriteria] = useState("");
+
+  //UI
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   // useEffect(() => {
   //   const fetchContacts = async () => {
@@ -82,8 +96,8 @@ const ContactsWrapper = ({ user, onTapContactChat, contacts }) => {
           (contact) =>
             contact.firstName.includes(criteria) ||
             contact.lastName.includes(criteria) ||
-            contact.domainId.includes(criteria) ||
-            contact.email.includes(criteria)
+            contact.domainId.includes(criteria)
+          // || contact.email.includes(criteria)
         )
       : contacts;
   }, [contacts, criteria]);
@@ -92,7 +106,23 @@ const ContactsWrapper = ({ user, onTapContactChat, contacts }) => {
     <Grid item xs={12}>
       <Paper className={classes.paper}>
         <React.Fragment>
-          <Title>Contacts</Title>
+          {/* <Title>Contacts</Title> */}
+          <Grid container justify="space-between">
+            <Grid item>
+              <Title>Contacts</Title>
+            </Grid>
+            <Grid item>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                endIcon={<PersonAddIcon />}
+                onClick={handleOpen}
+              >
+                Add
+              </Button>
+            </Grid>
+          </Grid>
           <Autocomplete
             id="free-solo-demo"
             freeSolo
@@ -180,6 +210,7 @@ const ContactsWrapper = ({ user, onTapContactChat, contacts }) => {
             </Link> */}
           </div>
         </React.Fragment>
+        <AddContactModal open={open} handleClose={handleClose} onSaveContacts={onSaveContacts} />
       </Paper>
     </Grid>
   );
