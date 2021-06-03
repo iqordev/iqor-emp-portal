@@ -24,6 +24,8 @@ import { getShortConversationName } from "../../utils/simplifyConversationName";
 import AttachmentProcessor from "./AttachmentProcessor";
 import { getAttendeeImage } from "../../utils/ImageHelper";
 import { getUniqueName } from "../../utils/chatConversationHelper";
+import { useContactContext } from "../../providers/ContactsProvider";
+import { useAuthContext } from "../../providers/AuthProvider";
 
 const useStyles = makeStyles((theme) => ({
   conversationName: {
@@ -49,14 +51,15 @@ const useStyles = makeStyles((theme) => ({
 
 const Messages = ({
   clientRef,
-  user,
   activeConversation,
-  contacts,
   isComposing,
   onRecipientChange,
 }) => {
   const history = useHistory();
   const classes = useStyles();
+
+  const { contacts } = useContactContext();
+  const { user } = useAuthContext();
 
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);

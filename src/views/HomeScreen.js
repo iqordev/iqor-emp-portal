@@ -70,6 +70,7 @@ import { deviceDetect } from "react-device-detect";
 import { v4 as uuidv4 } from "uuid";
 
 import { useAuthContext } from "../providers/AuthProvider";
+import { useContactContext } from "../providers/ContactsProvider";
 
 const Chat = require("@twilio/conversations");
 
@@ -169,6 +170,7 @@ export default function HomeScreen(props) {
   const clienRef = useRef();
 
   const { user, chatToken } = useAuthContext();
+  const { contacts } = useContactContext();
 
   // UI
   const [open, setOpen] = useState(false);
@@ -200,7 +202,6 @@ export default function HomeScreen(props) {
 
   // composing
   const [isComposing, setIsComposing] = useState(false);
-  const [contacts, setContacts] = useState([]);
   const [composeUniqueName, setComposeUniqueName] = useState("");
   const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
 
@@ -250,15 +251,9 @@ export default function HomeScreen(props) {
       .finally(setLoading(false));
   };
 
-  const fetchContacts = async () => {
-    const contacts = await searchContacts("");
-    console.log("contacts", contacts);
-    setContacts(contacts);
-  };
-
   useEffect(() => {
     if (user && chatToken) {
-      initialize().then(fetchContacts()).finally(setLoading(false));
+      initialize().finally(setLoading(false));
     }
   }, [user, chatToken]);
 
@@ -317,6 +312,7 @@ export default function HomeScreen(props) {
     setIsComposing(false);
   };
 
+  // todo  contact provider opt
   const onRecipientChange = (uniqueName, tags) => {
     setComposeUniqueName(uniqueName);
     console.log(uniqueName, tags, contacts);
@@ -421,19 +417,6 @@ export default function HomeScreen(props) {
         })
         .finally(setLoading(false));
     });
-  };
-
-  const onSaveContacts = async (selectedContacts) => {
-    try {
-      setLoading(true);
-      await saveContacts(selectedContacts);
-      const updatedContacts = await searchContacts("");
-
-      setContacts(updatedContacts);
-    } catch (error) {
-    } finally {
-      setLoading(false);
-    }
   };
 
   const sortedConversations = useMemo(() => {
@@ -632,8 +615,6 @@ export default function HomeScreen(props) {
                             <Messages
                               clientRef={clienRef}
                               activeConversation={activeConversation}
-                              user={user}
-                              contacts={contacts}
                               isComposing={isComposing}
                               onRecipientChange={onRecipientChange}
                             />
@@ -658,10 +639,8 @@ export default function HomeScreen(props) {
           ) : (
             <ContactsWrapper
               user={user}
-              contacts={contacts}
               setActiveConversation={setActiveConversation}
               onTapContactChat={onTapContactChat}
-              onSaveContacts={onSaveContacts}
             />
           )}
         </Container>

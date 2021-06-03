@@ -6,6 +6,7 @@ import { PersonAdd as PersonAddIcon } from "@material-ui/icons";
 
 import { saveContacts, searchAvailableContacts } from "../../api";
 import { useHistory } from "react-router";
+import { useContactContext } from "../../providers/ContactsProvider";
 
 function rand() {
   return Math.round(Math.random() * 20) - 10;
@@ -36,13 +37,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function AddContactModal({ open, handleClose, onSaveContacts }) {
+export default function AddContactModal({ open, handleClose }) {
   const classes = useStyles();
   const { history } = useHistory();
   // getModalStyle is not a pure function, we roll the style only on the first render
 
   const [modalStyle] = React.useState(getModalStyle);
 
+  const { onSaveContacts } = useContactContext();
+
+  // avail contact to add different from contacct provider
   const [contacts, setContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
 
@@ -56,6 +60,11 @@ export default function AddContactModal({ open, handleClose, onSaveContacts }) {
     fetchAvailableContacts();
     return () => {};
   }, []);
+
+  const onSave = () => {
+    onSaveContacts(selectedContacts);
+    handleClose();
+  };
 
   const body = (
     <div style={modalStyle} className={classes.paper}>
@@ -77,10 +86,7 @@ export default function AddContactModal({ open, handleClose, onSaveContacts }) {
         color="primary"
         fullWidth
         endIcon={<PersonAddIcon />}
-        onClick={() => {
-          onSaveContacts(selectedContacts);
-          handleClose();
-        }}
+        onClick={onSave}
       >
         Add
       </Button>

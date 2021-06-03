@@ -15,6 +15,7 @@ import {
   TableRow,
   Link,
   IconButton,
+  Checkbox,
 } from "@material-ui/core";
 import Title from "../../components/Title";
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -24,6 +25,9 @@ import {
   CallRounded,
   VideocamRounded,
   PersonAdd as PersonAddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Cancel as CancelIcon,
 } from "@material-ui/icons";
 
 import "./ContactsWrapper.css";
@@ -35,6 +39,7 @@ import { CALL_TYPE } from "../../constants/CallType";
 import { convertName } from "../../utils/nameHelper";
 import { getUniqueName } from "../../utils/chatConversationHelper";
 import AddContactModal from "./AddContactModal";
+import { useContactContext } from "../../providers/ContactsProvider";
 
 function preventDefault(event) {
   event.preventDefault();
@@ -57,17 +62,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ContactsWrapper = ({
-  user,
-  onTapContactChat,
-  onSaveContacts,
-  contacts,
-}) => {
+const ContactsWrapper = ({ user, onTapContactChat }) => {
   const classes = useStyles();
   const history = useHistory();
 
-  // const [contacts, setContacts] = useState([]);
+  const { contacts, onSelectContact, onDeselectAllContact } =
+    useContactContext();
   const [criteria, setCriteria] = useState("");
+  const [isEdit, setIsEdit] = useState(false);
 
   //UI
   const [open, setOpen] = useState(false);
@@ -79,16 +81,6 @@ const ContactsWrapper = ({
   const handleClose = () => {
     setOpen(false);
   };
-
-  // useEffect(() => {
-  //   const fetchContacts = async () => {
-  //     const contacts = await searchContacts("");
-  //     console.log("contacts", contacts);
-  //     setContacts(contacts);
-  //   };
-
-  //   fetchContacts();
-  // }, []);
 
   const filteredContacts = useMemo(() => {
     return criteria
@@ -112,15 +104,46 @@ const ContactsWrapper = ({
               <Title>Contacts</Title>
             </Grid>
             <Grid item>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                endIcon={<PersonAddIcon />}
-                onClick={handleOpen}
-              >
-                Add
-              </Button>
+              <div>
+                {isEdit ? (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    endIcon={<DeleteIcon />}
+                    onClick={() => {
+                      setIsEdit(false);
+                      onDeselectAllContact();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    endIcon={<PersonAddIcon />}
+                    onClick={handleOpen}
+                  >
+                    Add
+                  </Button>
+                )}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  endIcon={isEdit ? <CancelIcon /> : <EditIcon />}
+                  onClick={() => {
+                    setIsEdit((prev) => !prev);
+
+                    if (isEdit) {
+                      onDeselectAllContact();
+                    }
+                  }}
+                >
+                  {isEdit ? "Cancel" : "Edit"}
+                </Button>
+              </div>
             </Grid>
           </Grid>
           <Autocomplete
@@ -143,23 +166,32 @@ const ContactsWrapper = ({
           <Table size="small">
             <TableHead>
               <TableRow>
+                {isEdit && <TableCell align="left"></TableCell>}
                 <TableCell>Name</TableCell>
                 <TableCell>Job Title</TableCell>
+                <TableCell>Department Code</TableCell>
+                <TableCell>Location</TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredContacts.map((contact) => (
                 <TableRow key={contact.domainId}>
+                  {isEdit && (
+                    <TableCell align="left">
+                      <Checkbox
+                        checked={contact.isSelected ?? false}
+                        onChange={() => onSelectContact(contact)}
+                        inputProps={{ "aria-label": "primary checkbox" }}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
-                    {/* <div style={{ display: "flex" }}>
-                      <Avatar
-                        src={getAttendeeImage(contact.domainId, "alternate")}
-                      /> */}
                     {`${contact.lastName}, ${contact.firstName}`}
-                    {/* </div> */}
                   </TableCell>
                   <TableCell>{contact.jobTitle}</TableCell>
+                  <TableCell>{contact.departmentCode}</TableCell>
+                  <TableCell>{contact.location}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       color="primary"
@@ -210,7 +242,7 @@ const ContactsWrapper = ({
             </Link> */}
           </div>
         </React.Fragment>
-        <AddContactModal open={open} handleClose={handleClose} onSaveContacts={onSaveContacts} />
+        <AddContactModal open={open} handleClose={handleClose} />
       </Paper>
     </Grid>
   );
