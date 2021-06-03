@@ -1,6 +1,6 @@
-# Chat App with Twilio Programmable Chat and React
+# iQor Employee Portal Chat
 
-This repository is using [Twilio SDK Starter Application for Node.js](https://github.com/TwilioDevEd/sdk-starter-node) for backend. Make sure that server is running on port 5000 before starting this frontend.
+This repository is a chat and call application for iQor Employee Portal Chat. 
 
 ## Available Scripts
 
