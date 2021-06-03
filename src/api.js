@@ -1,9 +1,14 @@
 import axios from "axios";
 
-axios.interceptors.request.use(
+const API_URL = "https://iqormobpushnotif-development.azurewebsites.net";
+
+const instance = axios.create({
+  baseURL: `${API_URL}/api`,
+});
+
+instance.interceptors.request.use(
   async (config) => {
     const accessToken = localStorage.getItem("@accessToken");
-    console.log("accessToken", accessToken);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -14,63 +19,79 @@ axios.interceptors.request.use(
   }
 );
 
-export const getToken = async (email) => {
+export const getToken = async (domainId) => {
   const params = new URLSearchParams();
-  params.append("domainId", email);
+  params.append("domainId", domainId);
   params.append("clientSecret", "e4f3958c-48e0-4aa9-87f1-cad1f420fc52");
 
-  const response = await axios.post(
-    `https://iqormobpushnotif-development.azurewebsites.net/api/token`,
-    params
-  );
+  const response = await instance.post("/token", params);
 
   const { data } = response;
 
   localStorage.setItem("@accessToken", data.token);
 
-  console.log(data);
+  // console.log(data);
   return data.chatToken;
 };
 
-export const getUser = async () => {
-  return axios
-    .get(`https://iqormobpushnotif-development.azurewebsites.net/api/user`)
+export const signIn = async (userDTO) => {
+  return instance
+    .post("/user/signin/azure", userDTO)
     .then((res) => res.data)
-    .catch((err) => console.error("[MeetingScreen]: ", err));
+    .catch((err) => console.error("[signIn]: ", err));
 };
 
-export const startCall = async (currentMeetingId, mode) => {
-  axios
-    .post(
-      `https://iqormobpushnotif-development.azurewebsites.net/api/aws/video/call/${currentMeetingId}`,
-      {
-        mode, //video only for testing
-      }
-    )
+export const getUser = async () => {
+  return instance
+    .get("/user")
+    .then((res) => res.data)
+    .catch((err) => console.error("[getUser]: ", err));
+};
+
+export const startCall = async (currentMeetingId, mode, domainIds) => {
+  instance
+    .post(`/aws/video/call/${currentMeetingId}`, {
+      mode,
+      domainIds,
+    })
     .catch((err) => console.error("[MeetingScreen]: ", err));
 };
 
 export async function createMeetingRequest(meetingName, attendeeName) {
-  const response = await axios.post(
-    `https://iqormobpushnotif-development.azurewebsites.net/api/aws/meeting`,
-    {
-      meetingName,
-      attendeeName,
-    }
-  );
+  const response = await instance.post("/aws/meeting", {
+    meetingName,
+    attendeeName,
+  });
 
   console.log(response.data);
   return response.data;
 }
 
 export async function endMeetingRequest(meetingName) {
-  const response = await axios.delete(
-    `https://iqormobpushnotif-development.azurewebsites.net/api/aws/meeting`,
-    {
-      meetingName,
-    }
-  );
+  const response = await instance.delete("/aws/meeting", {
+    meetingName,
+  });
 
   console.log(response.data);
   return response.data;
 }
+
+export const searchContacts = async (searchTerm) => {
+  const response = await instance.get(`/contacts/${searchTerm}`);
+
+  return response.data;
+};
+
+export const searchAvailableContacts = async (searchTerm) => {
+  const response = await instance.get(`/contacts/available/${searchTerm}`);
+  return response.data;
+};
+
+export const saveContacts = async (contacts) => {
+  const response = await instance.post("/contacts", {
+    domainIds: contacts,
+  });
+  return response.data;
+};
+
+export default instance;
