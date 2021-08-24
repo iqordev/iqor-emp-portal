@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://iqormobpushnotif-development.azurewebsites.net";
+const API_URL = "https://iqorfuncmobchat001.azurewebsites.net";
 
 const instance = axios.create({
   baseURL: `${API_URL}/api`,
@@ -19,10 +19,27 @@ instance.interceptors.request.use(
   }
 );
 
+export const getTokenuser = async (domainId) => {
+  const params = new URLSearchParams();
+  params.append("domain_id", domainId);
+  params.append("client_secret", "e4f3958c-48e0-4aa9-87f1-cad1f420fc52");
+  params.append("grant_type", "password");
+  params.append("client_id", "IQOREMPPORTAL@MOBILE");
+
+  const response = await instance.post("/token", params);
+
+  const { data } = response;
+
+  localStorage.setItem("@accessToken", data.token);
+  return data;
+};
+
 export const getToken = async (domainId) => {
   const params = new URLSearchParams();
-  params.append("domainId", domainId);
-  params.append("clientSecret", "e4f3958c-48e0-4aa9-87f1-cad1f420fc52");
+  params.append("domain_id", domainId);
+  params.append("client_secret", "e4f3958c-48e0-4aa9-87f1-cad1f420fc52");
+  params.append("grant_type", "password");
+  params.append("client_id", "IQOREMPPORTAL@MOBILE");
 
   const response = await instance.post("/token", params);
 
@@ -30,13 +47,38 @@ export const getToken = async (domainId) => {
 
   localStorage.setItem("@accessToken", data.token);
 
-  // console.log(data);
+  console.log("getToken", data.chatToken);
+  return data.chatToken;
+};
+
+export const getToken2 = async (domainId) => {
+  const params = new URLSearchParams();
+  params.append("domainId", domainId);
+  params.append("clientSecret", "e4f3958c-48e0-4aa9-87f1-cad1f420fc52");
+
+  const response = await axios.post(
+    "https://iqormobpushnotif-development.azurewebsites.net/api/token",
+    params
+  );
+
+  const { data } = response;
+
+  localStorage.setItem("@accessToken", data.token);
+
+  console.log("getToken2", data.chatToken);
   return data.chatToken;
 };
 
 export const signIn = async (userDTO) => {
   return instance
     .post("/user/signin/azure", userDTO)
+    .then((res) => res.data)
+    .catch((err) => console.error("[signIn]: ", err));
+};
+
+export const signInAlternate = async (userDTO) => {
+  return instance
+    .post("/user/signin/alternate", userDTO)
     .then((res) => res.data)
     .catch((err) => console.error("[signIn]: ", err));
 };

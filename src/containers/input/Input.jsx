@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Input as InputComponent,
   Attachment,
+  HandRaise,
   IconButton,
   useNotificationDispatch,
   Remove,
@@ -10,6 +11,7 @@ import {
 import formatBytes from "../../utils/formatBytes";
 import "./Input.css";
 import { v4 as uuidv4 } from "uuid";
+import { useAuthContext } from "../../providers/AuthProvider";
 
 const uploadObjDefaults = {
   name: "",
@@ -24,6 +26,8 @@ const Input = ({
   onFocus,
   onSubmitIsComposing,
 }) => {
+  const { user } = useAuthContext();
+
   const [text, setText] = useState("");
   const inputRef = useRef();
   const uploadRef = useRef();
@@ -165,13 +169,23 @@ const Input = ({
             </div>
           ) : null}
         </form>
-        <IconButton
+        {/* <IconButton
           className="write-link attach"
           onClick={(_event) => {
             uploadRef.current.value = null;
             uploadRef.current.click();
           }}
           icon={<Attachment width="1.5rem" height="1.5rem" />}
+        /> */}
+        <IconButton
+          className="write-link attach"
+          onClick={(_event) => {
+            activeConversation.sendMessage(
+              `${user.firstName} ${user.lastName} requested remote assist`,
+              { giftedId: uuidv4(), type: "request_remote_assist" }
+            );
+          }}
+          icon={<HandRaise width="1.5rem" height="1.5rem" />}
         />
         <input
           type="file"

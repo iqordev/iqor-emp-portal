@@ -14,6 +14,10 @@ import {
   makeStyles,
   TextField,
   Popover,
+  Popper,
+  Chip,
+  Fade,
+  Paper,
 } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import { Videocam, Phone, People } from "@material-ui/icons";
@@ -26,6 +30,7 @@ import { getAttendeeImage } from "../../utils/ImageHelper";
 import { getUniqueName } from "../../utils/chatConversationHelper";
 import { useContactContext } from "../../providers/ContactsProvider";
 import { useAuthContext } from "../../providers/AuthProvider";
+import { v4 as uuidv4 } from "uuid";
 
 const useStyles = makeStyles((theme) => ({
   conversationName: {
@@ -201,6 +206,7 @@ const Messages = ({
       .then((conversation) => {
         conversation.getMessages().then((paginator) => {
           setMessages(paginator.items);
+          console.log(paginator.items);
         });
       })
       .catch((err) => {
@@ -208,6 +214,38 @@ const Messages = ({
         console.error("onToChange no conversation found", err);
       });
   };
+
+  const remoteActivity = useMemo(() => {
+    let requestMessage;
+    requestMessage = messages.find(
+      (m) => m.attributes?.type === "accepted_remote_assist"
+    );
+    if (!requestMessage) {
+      requestMessage = messages.find(
+        (m) => m.attributes?.type === "request_remote_assist"
+      );
+    }
+
+    console.log(
+      "requestMessage",
+      requestMessage,
+      // requestMessage.sid,
+      activeConversation.sid
+    );
+    if (requestMessage) {
+      return {
+        requestor: requestMessage.author,
+        type: requestMessage.attributes.type,
+        // optional
+        label:
+          requestMessage.attributes.type === "request_remote_assist"
+            ? "Requesting"
+            : "Accepted",
+      };
+    }
+
+    return null;
+  }, [messages]);
 
   return (
     <div className="message-list-container">
@@ -263,41 +301,11 @@ const Messages = ({
               </IconButton>
 
               <IconButton
-                onMouseEnter={handlePopoverOpen}
-                onMouseLeave={handlePopoverClose}
+                // onMouseEnter={handlePopoverOpen}
+                // onMouseLeave={handlePopoverClose}
+                onClick={open ? handlePopoverClose : handlePopoverOpen}
               >
                 <People />
-                <Popover
-                  id="mouse-over-popover"
-                  className={classes.popover}
-                  classes={{
-                    paper: classes.paper,
-                  }}
-                  open={open}
-                  anchorEl={anchorEl}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                  onClose={handlePopoverClose}
-                  disableRestoreFocus
-                >
-                  {participants.map((participant) => {
-                    let imageUrl = getAttendeeImage(
-                      participant.identity,
-                      "alternate"
-                    );
-                    return (
-                      <Typography key={participant.identity}>
-                        {participant.identity}
-                      </Typography>
-                    );
-                  })}
-                </Popover>
               </IconButton>
             </div>
           </Grid>
@@ -310,6 +318,108 @@ const Messages = ({
         isLoading={isLoading}
         className="chat-message-list"
       />
+      {/* <Popover
+        id="mouse-over-popover"
+        className={classes.popover}
+        classes={{
+          paper: classes.paper,
+          root: classes.popover,
+        }}
+        open={open}
+        anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        onClose={handlePopoverClose}
+        disableEnforceFocus={true}
+        disableRestoreFocus
+      >
+        {participants.map((participant) => {
+          let imageUrl = getAttendeeImage(participant.identity, "alternate");
+          return (
+            <div style={{ display: "flex", height: "100%" }}>
+              <Typography key={participant.identity}>
+                {participant.identity}
+              </Typography>
+              {remoteActivity?.requestor === participant.identity ? (
+                // <Chip
+                //   clickable={true}
+                //   color={
+                //     remoteActivity.type === "request_remote_assist"
+                //       ? "primary"
+                //       : "seconday"
+                //   }
+                //   label={remoteActivity.label}
+                //   onClick={(e) => {
+                //     console.log("request clicked");
+                //   }}
+                // />
+                <Button
+                  variant="contained"
+                  onClick={() => console.log("click")}
+                >
+                  Default
+                </Button>
+              ) : null}
+            </div>
+          );
+        })}
+      </Popover> */}
+      <Popper open={open} anchorEl={anchorEl} transition>
+        {({ TransitionProps }) => (
+          <Fade {...TransitionProps} timeout={350}>
+            <Paper className={classes.paper}>
+              {participants.map((participant) => {
+                let imageUrl = getAttendeeImage(
+                  participant.identity,
+                  "alternate"
+                );
+                return (
+                  <div
+                    key={participant.identity}
+                    style={{
+                      display: "flex",
+                      height: "100%",
+                    }}
+                  >
+                    <Typography>{participant.identity}</Typography>
+                    {remoteActivity?.requestor === participant.identity ? (
+                      <Chip
+                        disabled={
+                          user.domainId === remoteActivity.requestor ||
+                          remoteActivity.type === "accepted_remote_assist"
+                        }
+                        clickable={true}
+                        color={
+                          remoteActivity.type === "request_remote_assist"
+                            ? "primary"
+                            : "seconday"
+                        }
+                        label={remoteActivity.label}
+                        onClick={(e) => {
+                          // console.log("request clicked");
+                          activeConversation.sendMessage(
+                            `${user.firstName} ${user.lastName} accepted remote request assist from ${remoteActivity.requestor}`,
+                            {
+                              giftedId: uuidv4(),
+                              type: "accepted_remote_assist",
+                            }
+                          );
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </Paper>
+          </Fade>
+        )}
+      </Popper>
     </div>
   );
 };

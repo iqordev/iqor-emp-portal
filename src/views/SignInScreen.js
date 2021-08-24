@@ -71,31 +71,32 @@ const useStyles = makeStyles((theme) => ({
 
 const SignInScreen = () => {
   const classes = useStyles();
-  const { userSignIn } = useAuthContext();
+  const { userSignIn, userSignInAlternnate } = useAuthContext();
 
   const [loading, setLoading] = useState(false);
-  // const [domainId, setDomainId] = useState("");
-  // const [password, setPassword] = useState("");
+  const [domainId, setDomainId] = useState("");
+  const [password, setPassword] = useState("");
 
-  // const handleIdChange = (event) => {
-  //   setDomainId(event.target.value);
-  // };
+  const handleIdChange = (event) => {
+    setDomainId(event.target.value);
+  };
 
-  // const handlePasswordChange = (event) => {
-  //   setPassword(event.target.value);
-  // };
+  const handlePasswordChange = (event) => {
+    setPassword(event.target.value);
+  };
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  //   setLoading(true);
-  //   alert("A name was submitted: " + domainId + password);
+    setLoading(true);
+    // alert("A name was submitted: " + domainId + password);
 
-  //   if (domainId && password === "testpassword") {
-  //   }
+    // if (domainId && password === "testpassword") {
+    // }
+    userSignInAlternnate(domainId);
 
-  //   setLoading(false);
-  // };
+    setLoading(false);
+  };
 
   const loginPopup = () => {
     setLoading(true);
@@ -135,7 +136,7 @@ const SignInScreen = () => {
             Sign in with Azure
           </Button>
 
-          {/* <Typography component="h1" variant="h6">
+          <Typography component="h1" variant="h6">
             or
           </Typography>
 
@@ -169,7 +170,7 @@ const SignInScreen = () => {
             <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
-            /> 
+            />
             <Button
               type="submit"
               variant="contained"
@@ -178,7 +179,7 @@ const SignInScreen = () => {
             >
               Sign In
             </Button>
-             <Grid container>
+            <Grid container>
               <Grid item xs>
                 <Link href="#" variant="body2">
                   Forgot password?
@@ -189,8 +190,8 @@ const SignInScreen = () => {
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
-            </Grid> 
-          </form> */}
+            </Grid>
+          </form>
         </div>
       </Container>
     </>

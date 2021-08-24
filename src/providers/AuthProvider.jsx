@@ -6,7 +6,13 @@ import { v4 as uuidv4 } from "uuid";
 
 import { loginRequest } from "../config/authConfig";
 
-import { signIn, getUser } from "../api";
+import {
+  signIn,
+  getUser,
+  getToken,
+  signInAlternate,
+  getTokenuser,
+} from "../api";
 
 const AuthContext = createContext();
 
@@ -32,10 +38,50 @@ const AuthProvider = ({ children }) => {
           ...device,
         },
       });
-      setChatToken(chatToken);
+      // setChatToken(chatToken);
 
       localStorage.setItem("@deviceId", deviceId);
-      setUser(await getUser());
+      const user = await getUser();
+      setUser(user);
+
+      const token = await getToken(user.domainId);
+      setChatToken(token);
+
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error(error);
+      // notificationDispatch({
+      //   type: 0,
+      //   payload: {
+      //     message: error,
+      //     severity: "error",
+      //   },
+      // });
+    }
+  };
+
+  const userSignInAlternnate = async (domainId) => {
+    try {
+      const response = await getTokenuser(domainId);
+      localStorage.setItem("@accessToken", response.token);
+
+      const device = deviceDetect();
+      const deviceId = localStorage.getItem("@deviceId") ?? uuidv4();
+      const { chatToken } = await signInAlternate({
+        device: {
+          id: deviceId,
+          ...device,
+        },
+      });
+      // setChatToken(chatToken);
+
+      localStorage.setItem("@deviceId", deviceId);
+      const user = await getUser();
+      setUser(user);
+
+      const token = await getToken(user.domainId);
+      setChatToken(token);
+
       setIsAuthenticated(true);
     } catch (error) {
       console.error(error);
@@ -71,10 +117,14 @@ const AuthProvider = ({ children }) => {
               ...device,
             },
           });
-          setChatToken(chatToken);
+          // setChatToken(chatToken);
 
           localStorage.setItem("@deviceId", deviceId);
-          setUser(await getUser());
+          const user = await getUser();
+          setUser(user);
+
+          const token = await getToken(user.domainId);
+          setChatToken(token);
         }
       } catch (error) {
         console.error(error);
@@ -89,6 +139,7 @@ const AuthProvider = ({ children }) => {
     chatToken,
     isAuthenticated,
     userSignIn,
+    userSignInAlternnate,
   };
 
   return (

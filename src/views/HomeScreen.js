@@ -48,6 +48,7 @@ import "./HomeScreen.css";
 // api
 import {
   getToken,
+  getToken2,
   getUser,
   saveContacts,
   searchContacts,
@@ -206,8 +207,11 @@ export default function HomeScreen(props) {
   const [composeSelectedContacts, setComposeSelectedContacts] = useState([]);
 
   const initialize = async () => {
-    const client = await Chat.Client.create(chatToken);
+    console.log("chat token", chatToken);
+    let clientOptions = { logLevel: "debug" };
+    const client = await Chat.Client.create(chatToken, clientOptions);
     clienRef.current = client;
+    console.log("clienRef.current", clienRef.current);
 
     await clienRef.current.user.updateFriendlyName(
       `${user.lastName}, ${user.firstName}`
@@ -218,13 +222,23 @@ export default function HomeScreen(props) {
     });
 
     clienRef.current.on("tokenAboutToExpire", async () => {
-      const token = await getToken(user.domainId);
-      client.updateToken(token);
+      try {
+        console.log("token about to expire");
+        const token = await getToken2(user.domainId);
+        clienRef.current = await client.updateToken(token);
+      } catch (error) {
+        console.error("tokenAboutToExpire", error);
+      }
     });
 
     clienRef.current.on("tokenExpired", async () => {
-      const token = await getToken(user.domainId);
-      client.updateToken(token);
+      try {
+        console.log("token  expire");
+        const token = await getToken2(user.domainId);
+        clienRef.current = await client.updateToken(token);
+      } catch (error) {
+        console.error("tokenAboutToExpire", error);
+      }
     });
 
     clienRef.current.on("conversationAdded", (conversation) => {
