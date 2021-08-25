@@ -216,35 +216,61 @@ const Messages = ({
   };
 
   const remoteActivity = useMemo(() => {
-    let requestMessage;
-    requestMessage = messages.find(
-      (m) => m.attributes?.type === "accepted_remote_assist"
+    const filteredMessages = messages.filter(
+      (m) => m.attributes?.type === "request_remote_assist"
     );
-    if (!requestMessage) {
-      requestMessage = messages.find(
-        (m) => m.attributes?.type === "request_remote_assist"
-      );
-    }
+    const sessionIds = filteredMessages.map((m) => m.attributes?.sessionId);
 
-    console.log(
-      "requestMessage",
-      requestMessage,
-      // requestMessage.sid,
-      activeConversation.sid
-    );
-    if (requestMessage) {
+    console.log(sessionIds);
+    const remotes = sessionIds.map((id) => {
+      let requestMessage;
+      requestMessage = messages.find((m) => m.attributes?.sessionId === id);
+      console.log("requestMessage", requestMessage);
+      if (requestMessage) {
+        const requestMessageEnded = messages.some(
+          (m) =>
+            m.attributes?.type === "stopped_remote_assist" &&
+            m.attributes?.sessionId === requestMessage.attributes.sessionId
+        );
+
+        if (requestMessageEnded) {
+          console.log("requestMessageEnded", requestMessageEnded);
+          return null;
+        }
+        console.log("requestMessageEnded", false);
+
+        requestMessage =
+          messages.find(
+            (m) =>
+              m.attributes?.type === "accepted_remote_assist" &&
+              m.attributes?.sessionId === id
+          ) ?? requestMessage;
+      }
+
+      console.log(
+        "requestMessage",
+        requestMessage?.sid,
+        // requestMessage.sid,
+        activeConversation.sid
+      );
+      const isRequest =
+        requestMessage.attributes.type === "request_remote_assist";
       return {
-        requestor: requestMessage.author,
+        sessionId: requestMessage.attributes.sessionId,
+        acceptor: !isRequest ? requestMessage.author : null,
+        requestor: isRequest
+          ? requestMessage.author
+          : requestMessage.attributes.requestor,
         type: requestMessage.attributes.type,
         // optional
-        label:
-          requestMessage.attributes.type === "request_remote_assist"
-            ? "Requesting"
-            : "Accepted",
+        label: isRequest ? "Requesting" : requestMessage.attributes.sessionId,
       };
-    }
+    });
 
-    return null;
+    console.log(remotes);
+    const activeRemotes = remotes.filter((r) => r !== null);
+    console.log(activeRemotes);
+    return activeRemotes[0];
   }, [messages]);
 
   return (
@@ -318,58 +344,6 @@ const Messages = ({
         isLoading={isLoading}
         className="chat-message-list"
       />
-      {/* <Popover
-        id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-          root: classes.popover,
-        }}
-        open={open}
-        anchorEl={anchorEl}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-        onClose={handlePopoverClose}
-        disableEnforceFocus={true}
-        disableRestoreFocus
-      >
-        {participants.map((participant) => {
-          let imageUrl = getAttendeeImage(participant.identity, "alternate");
-          return (
-            <div style={{ display: "flex", height: "100%" }}>
-              <Typography key={participant.identity}>
-                {participant.identity}
-              </Typography>
-              {remoteActivity?.requestor === participant.identity ? (
-                // <Chip
-                //   clickable={true}
-                //   color={
-                //     remoteActivity.type === "request_remote_assist"
-                //       ? "primary"
-                //       : "seconday"
-                //   }
-                //   label={remoteActivity.label}
-                //   onClick={(e) => {
-                //     console.log("request clicked");
-                //   }}
-                // />
-                <Button
-                  variant="contained"
-                  onClick={() => console.log("click")}
-                >
-                  Default
-                </Button>
-              ) : null}
-            </div>
-          );
-        })}
-      </Popover> */}
       <Popper open={open} anchorEl={anchorEl} transition>
         {({ TransitionProps }) => (
           <Fade {...TransitionProps} timeout={350}>
@@ -395,19 +369,38 @@ const Messages = ({
                           remoteActivity.type === "accepted_remote_assist"
                         }
                         clickable={true}
-                        color={
-                          remoteActivity.type === "request_remote_assist"
-                            ? "primary"
-                            : "seconday"
-                        }
+                        color={"primary"}
                         label={remoteActivity.label}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           // console.log("request clicked");
-                          activeConversation.sendMessage(
+                          await activeConversation.sendMessage(
                             `${user.firstName} ${user.lastName} accepted remote request assist from ${remoteActivity.requestor}`,
                             {
                               giftedId: uuidv4(),
+                              sessionId: remoteActivity.sessionId,
+                              requestor: remoteActivity.requestor,
                               type: "accepted_remote_assist",
+                            }
+                          );
+                        }}
+                      />
+                    ) : null}
+
+                    {remoteActivity?.acceptor === participant.identity ? (
+                      <Chip
+                        disabled={remoteActivity?.acceptor !== user.domainId}
+                        clickable={true}
+                        color={"secondary"}
+                        label={remoteActivity.label}
+                        onClick={async (e) => {
+                          // console.log("request clicked");
+                          await activeConversation.sendMessage(
+                            `Remote control ended for ${user.domainId} and ${remoteActivity.requestor}`,
+                            {
+                              giftedId: uuidv4(),
+                              sessionId: remoteActivity.sessionId,
+                              requestor: remoteActivity.requestor,
+                              type: "stopped_remote_assist",
                             }
                           );
                         }}

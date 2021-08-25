@@ -181,8 +181,12 @@ const Input = ({
           className="write-link attach"
           onClick={(_event) => {
             activeConversation.sendMessage(
-              `${user.firstName} ${user.lastName} requested remote assist`,
-              { giftedId: uuidv4(), type: "request_remote_assist" }
+              `${user.domainId} requested remote assist`,
+              {
+                giftedId: uuidv4(),
+                type: "request_remote_assist",
+                sessionId: uuidv4(),
+              }
             );
           }}
           icon={<HandRaise width="1.5rem" height="1.5rem" />}
