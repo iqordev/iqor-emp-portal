@@ -12,6 +12,7 @@ import {
   getToken,
   signInAlternate,
   getTokenuser,
+  getIp,
 } from "../api";
 
 const AuthContext = createContext();
@@ -22,6 +23,7 @@ const AuthProvider = ({ children }) => {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatToken, setChatToken] = useState("");
+  const [ip, setIp] = useState(null);
   const [user, setUser] = useState(null);
   const { instance, accounts, inProgress } = useMsal();
 
@@ -46,6 +48,10 @@ const AuthProvider = ({ children }) => {
 
       const token = await getToken(user.domainId);
       setChatToken(token);
+
+      const currentIp = await getIp();
+      console.log("currentIp", currentIp);
+      setIp(currentIp);
 
       setIsAuthenticated(true);
     } catch (error) {
@@ -81,6 +87,10 @@ const AuthProvider = ({ children }) => {
 
       const token = await getToken(user.domainId);
       setChatToken(token);
+
+      const currentIp = await getIp();
+      console.log("currentIp", currentIp);
+      setIp(currentIp);
 
       setIsAuthenticated(true);
     } catch (error) {
@@ -125,6 +135,10 @@ const AuthProvider = ({ children }) => {
 
           const token = await getToken(user.domainId);
           setChatToken(token);
+
+          const currentIp = await getIp();
+          console.log("currentIp", currentIp);
+          setIp(currentIp);
         }
       } catch (error) {
         console.error(error);
