@@ -19,11 +19,6 @@ instance.interceptors.request.use(
   }
 );
 
-export const getIp = async () => {
-  const response = await instance.get("/ip");
-  return response.data;
-};
-
 export const getTokenuser = async (domainId) => {
   const params = new URLSearchParams();
   params.append("domain_id", domainId);
