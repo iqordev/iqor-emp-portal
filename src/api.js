@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://iqorfuncmobchat001.azurewebsites.net";
+const API_URL = "https://109e-124-104-112-243.ngrok.io";
 
 const instance = axios.create({
   baseURL: `${API_URL}/api`,
