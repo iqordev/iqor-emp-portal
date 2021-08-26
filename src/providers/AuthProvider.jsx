@@ -12,8 +12,9 @@ import {
   getToken,
   signInAlternate,
   getTokenuser,
-  getIp,
 } from "../api";
+
+const internalIp = require("internal-ip");
 
 const AuthContext = createContext();
 
@@ -49,8 +50,9 @@ const AuthProvider = ({ children }) => {
       const token = await getToken(user.domainId);
       setChatToken(token);
 
-      const currentIp = await getIp();
-      console.log("currentIp", currentIp);
+      const currentIp = await internalIp.v4();
+      const currentIpv6 = await internalIp.v6();
+      console.log("currentIp", currentIp, currentIpv6);
       setIp(currentIp);
 
       setIsAuthenticated(true);
@@ -88,8 +90,9 @@ const AuthProvider = ({ children }) => {
       const token = await getToken(user.domainId);
       setChatToken(token);
 
-      const currentIp = await getIp();
-      console.log("currentIp", currentIp);
+      const currentIp = await internalIp.v4();
+      const currentIpv6 = await internalIp.v6();
+      console.log("currentIp", currentIp, currentIpv6);
       setIp(currentIp);
 
       setIsAuthenticated(true);
@@ -136,8 +139,9 @@ const AuthProvider = ({ children }) => {
           const token = await getToken(user.domainId);
           setChatToken(token);
 
-          const currentIp = await getIp();
-          console.log("currentIp", currentIp);
+          const currentIp = await internalIp.v4();
+          const currentIpv6 = await internalIp.v6();
+          console.log("currentIp", currentIp, currentIpv6);
           setIp(currentIp);
         }
       } catch (error) {
