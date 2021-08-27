@@ -18,6 +18,7 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { MsalProvider } from "@azure/msal-react";
 import { CustomNavigationClient } from "./utils/NavigationClient";
 import { ContactProvider } from "./providers/ContactsProvider";
+import { ImenuProvider } from "./providers/iMenuProvider";
 
 function App({ pca }) {
   // The next 3 lines are optional. This is how you configure MSAL to take advantage of the router's navigate functions when MSAL redirects between pages in your app
@@ -33,7 +34,9 @@ function App({ pca }) {
             <NotificationGroup />
             <AuthProvider>
               <ContactProvider>
-                <Router />
+                <ImenuProvider>
+                  <Router />
+                </ImenuProvider>
               </ContactProvider>
             </AuthProvider>
           </NotificationProvider>

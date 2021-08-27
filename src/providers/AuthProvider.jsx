@@ -153,6 +153,7 @@ const AuthProvider = ({ children }) => {
   }, [inProgress, accounts, instance]);
 
   const authFulfiller = {
+    ip,
     user,
     chatToken,
     isAuthenticated,

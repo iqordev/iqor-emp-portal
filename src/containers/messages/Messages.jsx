@@ -31,6 +31,7 @@ import { getUniqueName } from "../../utils/chatConversationHelper";
 import { useContactContext } from "../../providers/ContactsProvider";
 import { useAuthContext } from "../../providers/AuthProvider";
 import { v4 as uuidv4 } from "uuid";
+import { useImenuContext } from "../../providers/iMenuProvider";
 
 const useStyles = makeStyles((theme) => ({
   conversationName: {
@@ -64,7 +65,8 @@ const Messages = ({
   const classes = useStyles();
 
   const { contacts } = useContactContext();
-  const { user } = useAuthContext();
+  const { user, ip } = useAuthContext();
+  const { connectionId, handleClickSendMessage } = useImenuContext();
 
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -262,6 +264,7 @@ const Messages = ({
           ? requestMessage.author
           : requestMessage.attributes.requestor,
         type: requestMessage.attributes.type,
+        ip: requestMessage.attributes.ip,
         // optional
         label: isRequest ? "Requesting" : requestMessage.attributes.sessionId,
       };
@@ -379,9 +382,19 @@ const Messages = ({
                               giftedId: uuidv4(),
                               sessionId: remoteActivity.sessionId,
                               requestor: remoteActivity.requestor,
+                              ip: remoteActivity.ip,
                               type: "accepted_remote_assist",
                             }
                           );
+
+                          const remotePayload = {
+                            AppUniqueID: "a19913e4-ab9f-4985-8d60-08d9f080d2dc",
+                            ConnectionID: connectionId,
+                            IPAddress: remoteActivity.ip,
+                            SMEDomainID: user.domainId,
+                            AgentDomainID: remoteActivity.requestor,
+                          };
+                          handleClickSendMessage(remotePayload);
                         }}
                       />
                     ) : null}

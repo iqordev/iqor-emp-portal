@@ -1,78 +1,96 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import { searchContacts, saveContacts } from "../api";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+} from "react";
 import { useAuthContext } from "./AuthProvider";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 const iMenuContext = createContext();
 
-const iMenuProvider = ({ children }) => {
-  const { isAuthenticated } = useAuthContext();
+const ImenuProvider = ({ children }) => {
+  const { isAuthenticated, user } = useAuthContext();
 
-  // Contact state
-  const [contacts, setContacts] = useState([]);
+  const AppUniqueID = "a19913e4-ab9f-4985-8d60-08d9f080d2dc";
+  const [socketUrl, setSocketUrl] = useState("wss://echo.websocket.org");
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+  const [connectionId, setConnectionId] = useState("");
 
-  const onSaveContacts = async (selectedContacts) => {
-    try {
-      await saveContacts(selectedContacts);
-      const updatedContacts = await searchContacts("");
+  const handleClickSendMessage = useCallback(
+    (obj) => sendMessage(obj),
+    [sendMessage]
+  );
 
-      setContacts(updatedContacts);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
+  }[readyState];
 
-  const onSelectContact = (selectedContact) => {
-    setContacts((prevState) =>
-      prevState.map((contact) => {
-        return contact.domainId === selectedContact.domainId
-          ? { ...contact, isSelected: !contact.isSelected }
-          : contact;
-      })
-    );
-  };
-
-  const onDeselectAllContact = () => {
-    setContacts((prevState) =>
-      prevState.map((contact) => ({ ...contact, isSelected: false }))
-    );
-  };
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setSocketUrl("ws://127.0.0.1:5011");
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const fetchContacts = async () => {
-      const contacts = await searchContacts("");
-      console.log("contacts", contacts);
-      setContacts(contacts);
-    };
+    // console.log("useWebSocket", connectionStatus, lastMessage);
+    const currentData = lastMessage ? JSON.parse(lastMessage.data) : null;
+    console.log("useWebSocket ", lastMessage, currentData);
+    if (!connectionId && currentData) {
+      setConnectionId(currentData.ConnectionID);
+    }
 
-    fetchContacts();
-  }, [isAuthenticated]);
+    if (!currentData) return;
 
-  const contactsFulfiller = {
-    contacts,
-    onSaveContacts,
-    onSelectContact,
-    onDeselectAllContact,
+    if (currentData.Information.toLowerCase().includes("initial")) {
+      const payload = {
+        AppUniqueID: AppUniqueID,
+        ConnectionID: connectionId,
+        IPAddress: "",
+        SMEDomainID: user.domainId,
+        AgentDomainID: "",
+        Action: "Status",
+      };
+      console.log("sending payload", payload);
+      sendMessage(payload);
+    }
+  }, [
+    lastMessage,
+    connectionStatus,
+    connectionId,
+    isAuthenticated,
+    user,
+    sendMessage,
+  ]);
+
+  const imenuFullfiller = {
+    handleClickSendMessage,
+    lastMessage,
+    connectionStatus,
+    connectionId,
   };
 
   return (
-    <iMenuContext.Provider value={contactsFulfiller}>
+    <iMenuContext.Provider value={imenuFullfiller}>
       {children}
     </iMenuContext.Provider>
   );
 };
 
-const useContactContext = () => {
+const useImenuContext = () => {
   const context = useContext(iMenuContext);
 
   if (!context) {
-    throw new Error("useContactContext must be used within iMenuProvider");
+    throw new Error("useImenuContext must be used within iMenuProvider");
   }
 
   return context;
 };
 
-
-Diarmuiduaduibhne1!
-export { iMenuProvider, useContactContext };
+export { ImenuProvider, useImenuContext };

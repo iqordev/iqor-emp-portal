@@ -26,7 +26,7 @@ const Input = ({
   onFocus,
   onSubmitIsComposing,
 }) => {
-  const { user } = useAuthContext();
+  const { user, ip } = useAuthContext();
 
   const [text, setText] = useState("");
   const inputRef = useRef();
@@ -185,6 +185,7 @@ const Input = ({
               {
                 giftedId: uuidv4(),
                 type: "request_remote_assist",
+                ip: ip,
                 sessionId: uuidv4(),
               }
             );
